@@ -53,6 +53,8 @@
     "@types/node": "^10.7.0",
     "@types/react": "^16.4.10",
     "@types/react-dom": "^16.0.7",
+    "node-sass": "^4.9.3",
+    "sass-loader": "^7.1.0",
     "typescript": "^3.0.1"
   },
   "jest": {

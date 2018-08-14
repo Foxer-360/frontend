@@ -4,7 +4,7 @@ import * as ReactDOM from 'react-dom';
 import Application from '@source/components/Application';
 import registerServiceWorker from '@source/services/serviceWorker';
 
-import './index.css';
+import '@source/styles/main.scss';
 
 ReactDOM.render(
   <Application />,
