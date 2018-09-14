@@ -1,7 +1,7 @@
 {
   "compilerOptions": {
     "baseUrl": ".",
-    "outDir": "build/dist",
+    "outDir": "build/server",
     "module": "esnext",
     "target": "es5",
     "lib": ["es6", "dom", "esnext.asynciterable"],
@@ -9,7 +9,7 @@
     "allowJs": true,
     "jsx": "react",
     "moduleResolution": "node",
-    "rootDir": "src",
+    "rootDir": ".",
     "forceConsistentCasingInFileNames": true,
     "noImplicitReturns": true,
     "noImplicitThis": true,
@@ -19,21 +19,23 @@
     "noUnusedLocals": true,
     "allowSyntheticDefaultImports": true,
     "paths": {
-      "@source/*": ["src/*"]
+      "@source/*": ["src/*"],
+      "components/*": ["components/*"],
+      "plugins/*": ["plugins/*"]
     },
     "typeRoots": [
-      "node_modules/@types",
-      "src/@types"
+      "node_modules/@types"
     ]
   },
   "exclude": [
-    "node_modules/**/*",
-    "build",
-    "scripts",
     "acceptance-tests",
-    "webpack",
+    "build",
+    "config",
     "jest",
-    "src/setupTests.ts",
+    "node_modules",
+    "public",
+    "scripts",
+    "webpack",
     "components",
     "plugins"
   ]
