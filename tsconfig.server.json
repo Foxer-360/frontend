@@ -19,8 +19,13 @@
     "noUnusedLocals": true,
     "allowSyntheticDefaultImports": true,
     "paths": {
-      "@source/*": ["src/*"]
-    }
+      "@source/*": ["src/*"],
+      "components/*": ["components/*"],
+      "plugins/*": ["plugins/*"]
+    },
+    "typeRoots": [
+      "node_modules/@types"
+    ]
   },
   "exclude": [
     "acceptance-tests",
@@ -30,6 +35,8 @@
     "node_modules",
     "public",
     "scripts",
-    "webpack"
+    "webpack",
+    "components",
+    "plugins"
   ]
 }

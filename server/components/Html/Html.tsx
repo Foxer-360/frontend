@@ -17,6 +17,9 @@ const Html = ({ content, client: { cache }, manifest }: IProperties) => (
       <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no" />
 
       <link href={`/${manifest['main.css']}`} rel="stylesheet" type="text/css"/>
+      <link href="/styles/kohinoor.css" rel="stylesheet" type="text/css" />
+
+      <title>FrontEnd</title>
     </head>
     <body>
       <div id="root" dangerouslySetInnerHTML={{ __html: content }} />

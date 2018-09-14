@@ -1,47 +1,31 @@
+import { config } from 'dotenv';
 import express from 'express';
 import fs from 'fs';
 import path from 'path';
 import * as React from 'react';
 import { ApolloProvider, renderToStringWithData } from 'react-apollo';
 import ReactDOM from 'react-dom/server';
-import Application from '../src/components/Application';
-import Html from './components/Html';
-// import { client } from './graphql';
-
-import { InMemoryCache } from 'apollo-cache-inmemory';
-import ApolloClient from 'apollo-client';
-import { ApolloLink } from 'apollo-link';
-import { createHttpLink } from 'apollo-link-http';
-import fetch from 'node-fetch';
 import { StaticRouter } from 'react-router';
 import { Route } from 'react-router-dom';
+import Application from '../src/components/Application';
+import Html from './components/Html';
+import { client } from './graphql';
+
+// Load configuration from .env file
+config();
+
+if (!process.env.SERVER_PORT) {
+  // tslint:disable-next-line:no-console
+  console.log(`Server port was not specified. Try to run app on port 8000...`);
+}
 
 const app = express();
-const port = 8001;
+const port = process.env.SERVER_PORT || 8000;
 
 app.use('/static', express.static(path.join(process.cwd(), 'build/static')));
+app.use('/styles', express.static(path.join(process.cwd(), 'build/styles')));
+app.use('/assets', express.static(path.join(process.cwd(), 'build/assets')));
 app.use((req: express.Request, res: express.Response, next: express.NextFunction) => {
-  // To Do
-
-  const cache = new InMemoryCache();
-
-  const httpLink = createHttpLink({
-    // tslint:disable-next-line:no-any
-    fetch: fetch as any,
-    // headers: req.headers,
-    uri: 'http://localhost:8000/graphql',
-  });
-
-  const client = new ApolloClient({
-    cache,
-    connectToDevTools: false,
-    link: ApolloLink.from([
-      httpLink
-    ]),
-    ssrForceFetchDelay: 100,
-    ssrMode: true,
-  });
-
   const SSR = (
     <ApolloProvider client={client}>
       <StaticRouter location={req.url} context={{}}>

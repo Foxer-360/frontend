@@ -1,8 +1,8 @@
+import { LightweightComposer } from '@foxer360/composer';
 import * as queries from '@source/services/graphql/queries';
+import { ComponentsModule, PluginsModule } from '@source/services/modules';
 import * as React from 'react';
 import { Query } from 'react-apollo';
-
-const { Component } = React;
 
 export interface IProperties {
   url?: string;
@@ -10,47 +10,60 @@ export interface IProperties {
   location?: any;
 }
 
-class Application extends Component<IProperties, {}> {
+class Application extends React.Component<IProperties, {}> {
 
   public render() {
-    const path = this.props.location.pathname;
+    const path = this.resolvePath(this.props.location.pathname);
+
     if (!path) {
-      return <span>Bad Pathname</span>;
+      return null;
+    }
+
+    return (
+      <Query
+        query={queries.FRONTEND}
+        variables={{ url: path }}
+      >
+        {({ loading, data, error }) => {
+          if (loading) {
+            return <span>Loading page...</span>;
+          }
+
+          if (error) {
+            return <span>Some error occured...</span>;
+          }
+
+          if (!data.frontend) {
+            return <span>Page not found...</span>;
+          }
+
+          if (!data.frontend.page.content) {
+            return <span>Content of page was not found...</span>;
+          }
+
+          return (
+            <LightweightComposer
+              content={data.frontend.page.content}
+              componentModule={ComponentsModule}
+              pluginModule={PluginsModule}
+            />
+          );
+        }}
+      </Query>
+    );
+  }
+
+  private resolvePath(path: string) {
+    if (!path) {
+      return null;
     }
 
     const regex = /[\.]{1}.{2,5}$/gi;
     if (regex.test(path)) {
-      return <span>Some static file</span>;
+      return null;
     }
 
-    return (
-      <div>
-        <Query
-          query={queries.FRONTEND}
-          variables={{ url: path }}
-        >
-          {({ loading, data, error }) => {
-            if (loading) {
-              return <span>Loading page...</span>;
-            }
-
-            if (error) {
-              return <span>Page not found</span>;
-            }
-
-            return (
-              <div>
-                <span><strong>Website: </strong>{data.frontend.website.title}</span>
-                <br />
-                <span><strong>Language: </strong>{data.frontend.language.name}</span>
-                <br />
-                <span><strong>Page: </strong>{data.frontend.page.name}</span>
-              </div>
-            );
-          }}
-        </Query>
-      </div>
-    );
+    return path;
   }
 
 }

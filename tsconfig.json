@@ -20,15 +20,21 @@
     "allowSyntheticDefaultImports": true,
     "paths": {
       "@source/*": ["src/*"]
-    }
+    },
+    "typeRoots": [
+      "node_modules/@types",
+      "src/@types"
+    ]
   },
   "exclude": [
-    "node_modules",
+    "node_modules/**/*",
     "build",
     "scripts",
     "acceptance-tests",
     "webpack",
     "jest",
-    "src/setupTests.ts"
+    "src/setupTests.ts",
+    "components",
+    "plugins"
   ]
 }

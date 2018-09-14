@@ -5,10 +5,17 @@ import { createHttpLink } from 'apollo-link-http';
 
 import * as queries from './queries';
 
+let graphqlServer = process.env.REACT_APP_GRAPHQL_SERVER
+if (!graphqlServer) {
+  // tslint:disable-next-line:no-console
+  console.log(`Server for GraphQL is not set. Please setup .env file correctly...`);
+  graphqlServer = 'http://localhost:8000/graphql'; // Something like default value
+}
+
 const cache = new InMemoryCache();
 
 const httpLink = createHttpLink({
-  uri: 'http://localhost:8000/graphql'
+  uri: graphqlServer,
 });
 
 const client = new ApolloClient({

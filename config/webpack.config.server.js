@@ -1,4 +1,5 @@
 const path = require('path');
+const deps = require('./deps');
 
 const appPath = path.resolve(__dirname, '../');
 const appServerPath = path.resolve(appPath, 'server');
@@ -30,7 +31,9 @@ module.exports = {
       '.jsx'
     ],
     alias: {
-      '@source': path.resolve(appPath, 'src')
+      '@source': path.resolve(appPath, 'src'),
+      'components': deps.componentsPath,
+      'plugins': deps.pluginsPath
     }
   },
   module: {
@@ -53,7 +56,12 @@ module.exports = {
         loader: 'babel-loader',
         query: {
           presets: ['es2015', 'stage-0']
-        }
+        },
+        exclude: [
+          path.resolve(appPath, 'node_modules'),
+          deps.componentsPath,
+          deps.pluginsPath
+        ]
       },
       {
         test: /\.js$/,
