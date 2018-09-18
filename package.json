@@ -1,9 +1,13 @@
 {
   "name": "@foxer360/frontend",
   "version": "0.1.0",
+  "description": "",
+  "repository": "git@github.com:Foxer-360/frontend.git",
+  "author": "Filip Suchý <nevim42@gmail.com>",
+  "license": "MIT",
   "private": true,
   "dependencies": {
-    "@foxer360/composer": "git+ssh:git@github.com:Foxer-360/composer.git#sandbox",
+    "@foxer360/composer": "git+https://github.com/Foxer-360/composer.git#sandbox",
     "apollo-boost": "^0.1.16",
     "apollo-link-ws": "^1.0.8",
     "autoprefixer": "7.1.6",
@@ -131,7 +135,7 @@
     ],
     "globals": {
       "ts-jest": {
-        "tsConfigFile": "/home/nevim42/Repositories/fox/frontend/tsconfig.test.json"
+        "tsConfigFile": "tsconfig.test.json"
       }
     }
   },
