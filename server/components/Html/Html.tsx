@@ -1,4 +1,5 @@
 import * as React from 'react';
+import { HelmetData } from 'react-helmet';
 
 // tslint:disable:no-any
 
@@ -8,18 +9,21 @@ interface IProperties {
     cache: any;
   }
   manifest: any;
+  helmet: HelmetData;
 }
 
-const Html = ({ content, client: { cache }, manifest }: IProperties) => (
+const Html = ({ content, client: { cache }, manifest, helmet }: IProperties) => (
   <html lang="en">
     <head>
       <meta charSet="utf-8" />
       <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no" />
+      {helmet.meta.toComponent()}
 
       <link href={`/${manifest['main.css']}`} rel="stylesheet" type="text/css"/>
       <link href="/styles/kohinoor.css" rel="stylesheet" type="text/css" />
+      {helmet.link.toComponent()}
 
-      <title>FrontEnd</title>
+      {helmet.title.toComponent()}
     </head>
     <body>
       <div id="root" dangerouslySetInnerHTML={{ __html: content }} />

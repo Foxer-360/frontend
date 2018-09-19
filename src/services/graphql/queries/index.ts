@@ -14,6 +14,7 @@ export const FRONTEND = gql`
         name
         content
       }
+      seo
     }
   }
 `;
