@@ -1,0 +1,10 @@
+.cirlceci/**/*
+build/**/*
+docs/**/*
+lib/**/*
+node_modules/**/*
+public/**/*
+server/**/*
+src/**/*
+styles/**/*
+tests/**/*
