@@ -58,6 +58,10 @@ jobs:
           command: yarn install
       # Save dependencies
       - *save_dependencies
+      # Resolve dependencies like components and plugins
+      - run:
+          name: Resolve Components and Plugins
+          command: yarn deps
       # Build frontend
       - run:
           name: Build library
