@@ -5,11 +5,16 @@ import path from 'path';
 import * as React from 'react';
 import { ApolloProvider, renderToStringWithData } from 'react-apollo';
 import ReactDOM from 'react-dom/server';
-import { StaticRouter } from 'react-router';
+import { Helmet } from 'react-helmet';
+import { RouteComponentProps, StaticRouter } from 'react-router';
 import { Route } from 'react-router-dom';
 import Application from '../src/components/Application';
 import Html from './components/Html';
 import { client } from './graphql';
+import { clearTerminal } from './utils';
+
+// Clear terminal
+clearTerminal();
 
 // Load configuration from .env file
 config();
@@ -20,16 +25,30 @@ if (!process.env.SERVER_PORT) {
 }
 
 const app = express();
-const port = process.env.SERVER_PORT || 8000;
+const port = Number(process.env.SERVER_PORT) || 80 as number;
 
 app.use('/static', express.static(path.join(process.cwd(), 'build/static')));
 app.use('/styles', express.static(path.join(process.cwd(), 'build/styles')));
 app.use('/assets', express.static(path.join(process.cwd(), 'build/assets')));
 app.use((req: express.Request, res: express.Response, next: express.NextFunction) => {
+  let serverUrl = process.env.SERVER_URL as string;
+  if (!serverUrl || serverUrl === undefined || serverUrl === null) {
+    serverUrl = '';
+  }
+  if (serverUrl[serverUrl.length - 1] === '/') {
+    serverUrl = serverUrl.slice(0, -1);
+  }
+
+  if (port !== 80 && port !== 443) {
+    serverUrl += `:${port}`;
+  }
+
+  const renderApp = (props: RouteComponentProps) => (<Application server={serverUrl} {...props} />);
+
   const SSR = (
     <ApolloProvider client={client}>
       <StaticRouter location={req.url} context={{}}>
-        <Route component={Application} />
+        <Route render={renderApp} />
       </StaticRouter>
     </ApolloProvider>
   );
@@ -45,6 +64,7 @@ app.use((req: express.Request, res: express.Response, next: express.NextFunction
         content={content}
         client={client}
         manifest={JSON.parse(manifest)}
+        helmet={Helmet.renderStatic()}
       />
     );
     const staticHtml = ReactDOM.renderToStaticMarkup(html);
