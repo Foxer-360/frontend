@@ -1,4 +1,4 @@
-import { LightweightComposer } from '@foxer360/composer';
+import { Context, LightweightComposer } from '@foxer360/composer';
 import * as queries from '@source/services/graphql/queries';
 import { ComponentsModule, PluginsModule } from '@source/services/modules';
 import * as React from 'react';
@@ -32,7 +32,19 @@ export interface ISeoPluginData {
   googlePlusImage?: string;
 }
 
-class Application extends React.Component<IProperties, {}> {
+export interface IState {
+  context: Context;
+}
+
+class Application extends React.Component<IProperties, IState> {
+
+  constructor(props: IProperties) {
+    super(props);
+
+    this.state = {
+      context: new Context(),
+    };
+  }
 
   public render() {
     const path = this.resolvePath(this.props.location.pathname);
@@ -46,7 +58,7 @@ class Application extends React.Component<IProperties, {}> {
         query={queries.FRONTEND}
         variables={{ url: path }}
       >
-        {({ loading, data, error }) => {
+        {({ loading, data, error, client }) => {
           if (loading) {
             return <span>Loading page...</span>;
           }
@@ -130,6 +142,9 @@ class Application extends React.Component<IProperties, {}> {
             googlePlusImage = seo.googlePlusImage;
           }
 
+          this.state.context.writeProperty('website', data.frontend.website.id);
+          this.state.context.writeProperty('language', data.frontend.language.id);
+
           return (
             <>
               <Helmet>
@@ -158,6 +173,9 @@ class Application extends React.Component<IProperties, {}> {
                 content={data.frontend.page.content}
                 componentModule={ComponentsModule}
                 pluginModule={PluginsModule}
+                context={this.state.context}
+                plugins={['navigations']}
+                client={client}
               />
             </>
           );
