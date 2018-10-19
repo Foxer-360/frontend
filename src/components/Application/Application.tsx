@@ -75,11 +75,6 @@ class Application extends React.Component<IProperties, IState> {
             return <span>Content of page was not found...</span>;
           }
 
-          // tslint:disable-next-line:no-console
-          console.log('data', data);
-          // tslint:disable-next-line:no-console
-          console.log('client', client);
-
           let fullUrl = path;
           if (this.props.server && this.props.server.length > 1) {
             fullUrl = `${this.props.server}${path}`;
@@ -150,9 +145,6 @@ class Application extends React.Component<IProperties, IState> {
           this.state.context.writeProperty('website', data.frontend.website.id);
           this.state.context.writeProperty('language', data.frontend.language.id);
           this.state.context.writeProperty('languageCode', data.frontend.language.code);
-
-          // tslint:disable-next-line:no-console
-          console.log('this.state.context', this.state.context);
 
           return (
             <>
