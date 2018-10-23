@@ -170,12 +170,13 @@ class Application extends React.Component<IProperties, IState> {
                 <meta itemProp="name" content={googlePlusTitle} />
                 <meta itemProp="image" content={googlePlusImage} />
               </Helmet>
+
               <LightweightComposer
                 content={data.frontend.page.content}
                 componentModule={ComponentsModule}
                 pluginModule={PluginsModule}
                 context={this.state.context}
-                plugins={['navigations']}
+                plugins={['navigations', 'languages']}
                 client={client}
               />
             </>
@@ -197,7 +198,6 @@ class Application extends React.Component<IProperties, IState> {
 
     return path;
   }
-
 }
 
 export default Application;
