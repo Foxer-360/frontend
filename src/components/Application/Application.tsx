@@ -144,6 +144,7 @@ class Application extends React.Component<IProperties, IState> {
 
           this.state.context.writeProperty('website', data.frontend.website.id);
           this.state.context.writeProperty('language', data.frontend.language.id);
+          this.state.context.writeProperty('languageCode', data.frontend.language.code);
 
           return (
             <>
