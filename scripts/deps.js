@@ -314,8 +314,6 @@ function linkAllLibs(libs) {
     return;
   }
 
-  console.log('%c Emilio: yup', 'background: #222; color: #bada55', libs);
-
   libs.forEach(linkLocalLib);
 }
 
@@ -377,8 +375,6 @@ function copyLibStyle(lib) {
  * @param {json} lib full lib definition object
  */
 function copyLibAssets(lib) {
-
-  console.log('%c Emilio: ', 'background: #222; color: #bada55');
 
   if (!lib.paths.assets) {
     return;
