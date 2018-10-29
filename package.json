@@ -8,6 +8,7 @@
   "private": true,
   "dependencies": {
     "@foxer360/composer": "git+https://github.com/Foxer-360/composer.git#sandbox",
+    "@types/graphql": "^14.0.3",
     "apollo-boost": "^0.1.17",
     "apollo-link-ws": "^1.0.9",
     "autoprefixer": "7.1.6",

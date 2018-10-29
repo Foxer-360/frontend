@@ -59,7 +59,7 @@ class Application extends React.Component<IProperties, IState> {
         variables={{ url: path }}
       >
         {({ loading, data, error, client }) => {
-          if (loading) {
+          if (!data) {
             return <span>Loading page...</span>;
           }
 
