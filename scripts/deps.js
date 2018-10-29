@@ -174,10 +174,10 @@ async function generateDefinition(name, type, libPath, json) {
 
   // If assets are defined, add it
   if (json.assets) {
-    _paths.assets = path.resolve(paths.assets, `${name}`);
+    _paths.assets = path.resolve(paths.assets);
     _paths.assetsTarget = path.resolve(_paths.target, json.assets);
     _paths.relative.assets = `/assets/${name}`;
-  }
+  } 
 
   // Process main file of lib
   const main = parseMainFile(_paths.target);
@@ -375,6 +375,7 @@ function copyLibStyle(lib) {
  * @param {json} lib full lib definition object
  */
 function copyLibAssets(lib) {
+
   if (!lib.paths.assets) {
     return;
   }
