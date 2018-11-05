@@ -45,6 +45,16 @@ class Application extends React.Component<IProperties, IState> {
       context: new Context(),
     };
   }
+  public componentWillReceiveProps({ location: { pathname: newPath } }: LooseObject) {
+    const { location: { pathname: oldPath } } = this.props;
+
+    if (newPath !== oldPath) {
+      window.scroll({
+        behavior: 'smooth',
+        top: 0,
+    });
+    }
+  }
 
   public render() {
     const path = this.resolvePath(this.props.location.pathname);
