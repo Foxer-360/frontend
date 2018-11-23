@@ -1,7 +1,9 @@
 import { Context, LightweightComposer } from '@foxer360/composer';
-import * as queries from '@source/services/graphql/queries';
+
+import { mutations, queries } from '@source/services/graphql';
 import { ComponentsModule, PluginsModule } from '@source/services/modules';
 import * as React from 'react';
+
 import { Query } from 'react-apollo';
 import { Helmet } from 'react-helmet';
 
@@ -155,6 +157,29 @@ class Application extends React.Component<IProperties, IState> {
           this.state.context.writeProperty('website', data.frontend.website.id);
           this.state.context.writeProperty('language', data.frontend.language.id);
           this.state.context.writeProperty('languageCode', data.frontend.language.code);
+
+          client.mutate({
+            mutation: mutations.LOCAL_SELECT_PAGE,
+            variables: {
+              id: data.frontend.page.id
+            }
+          });
+
+          client.mutate({
+            mutation: mutations.LOCAL_SELECT_WEBSITE,
+            variables: {
+              id: data.frontend.website.id
+            }
+          });
+
+          client.mutate({
+            mutation: mutations.LOCAL_SELECT_LANGUAGE,
+            variables: {
+              id: data.frontend.language.id
+            }
+          });
+
+
 
           return (
             <>

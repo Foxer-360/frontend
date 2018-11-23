@@ -1,6 +1,6 @@
 import gql from 'graphql-tag';
 
-export const FRONTEND = gql`
+const FRONTEND = gql`
   query frontend($url: String!) {
     frontend( where: { url: $url } ) {
       website {
@@ -13,6 +13,7 @@ export const FRONTEND = gql`
         name
       }
       page {
+        id
         name
         content
       }
@@ -20,3 +21,7 @@ export const FRONTEND = gql`
     }
   }
 `;
+
+export {
+  FRONTEND
+};
