@@ -174,7 +174,7 @@ async function generateDefinition(name, type, libPath, json) {
 
   // If assets are defined, add it
   if (json.assets) {
-    _paths.assets = path.resolve(paths.assets);
+    _paths.assets = path.resolve(paths.assets, `${name}`);
     _paths.assetsTarget = path.resolve(_paths.target, json.assets);
     _paths.relative.assets = `/assets/${name}`;
   } 
