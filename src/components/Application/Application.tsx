@@ -1,4 +1,4 @@
-import { Context, LightweightComposer } from '@foxer360/composer';
+import { LightweightComposer } from '@foxer360/composer';
 
 import { mutations, queries } from '@source/services/graphql';
 import { ComponentsModule, PluginsModule } from '@source/services/modules';
@@ -35,7 +35,7 @@ export interface ISeoPluginData {
 }
 
 export interface IState {
-  context: Context;
+  contextLoading: any;
 }
 
 class Application extends React.Component<IProperties, IState> {
@@ -44,7 +44,7 @@ class Application extends React.Component<IProperties, IState> {
     super(props);
 
     this.state = {
-      context: new Context(),
+      contextLoading: null,
     };
   }
   public componentWillReceiveProps({ location: { pathname: newPath } }: LooseObject) {
@@ -71,6 +71,7 @@ class Application extends React.Component<IProperties, IState> {
         variables={{ url: path }}
       >
         {({ loading, data, error, client }) => {
+
           if (!data) {
             return <span>Loading page...</span>;
           }
@@ -86,6 +87,15 @@ class Application extends React.Component<IProperties, IState> {
           if (!data.frontend.page.content) {
             return <span>Content of page was not found...</span>;
           }
+
+          if (this.state.contextLoading === null) {
+            this.setState({ contextLoading: true }, () => this.setContext(client, data.frontend))
+          }
+
+          if (this.state.contextLoading === true) {
+            return <span>Loading page...</span>;
+          }
+
 
           let fullUrl = path;
           if (this.props.server && this.props.server.length > 1) {
@@ -111,10 +121,6 @@ class Application extends React.Component<IProperties, IState> {
           if (seo && seo.facebookTitle) {
             facebookTitle = seo.facebookTitle;
           }
-          // let facebookPublisher = '';
-          // if (seo && seo.facebookPublisher) {
-          //   facebookPublisher = seo.facebookPublisher;
-          // }
           let facebookDescription = '';
           if (seo && seo.facebookDescription) {
             facebookDescription = seo.facebookDescription;
@@ -128,10 +134,6 @@ class Application extends React.Component<IProperties, IState> {
           if (seo && seo.twitterTitle) {
             twitterTitle = seo.twitterTitle;
           }
-          // let twitterPublisher = '';
-          // if (seo && seo.twitterPublisher) {
-          //   twitterPublisher = seo.twitterPublisher;
-          // }
           let twitterDescription = '';
           if (seo && seo.twitterDescription) {
             twitterDescription = seo.twitterDescription;
@@ -145,39 +147,11 @@ class Application extends React.Component<IProperties, IState> {
           if (seo && seo.googlePlusTitle) {
             googlePlusTitle = seo.googlePlusTitle;
           }
-          // let googlePlusPublisher = '';
-          // if (seo && seo.googlePlusPublisher) {
-          //   googlePlusPublisher = seo.googlePlusPublisher;
-          // }
           let googlePlusImage = '';
           if (seo && seo.googlePlusImage) {
             googlePlusImage = seo.googlePlusImage;
           }
 
-          this.state.context.writeProperty('website', data.frontend.website.id);
-          this.state.context.writeProperty('language', data.frontend.language.id);
-          this.state.context.writeProperty('languageCode', data.frontend.language.code);
-
-          client.mutate({
-            mutation: mutations.LOCAL_SELECT_PAGE,
-            variables: {
-              id: data.frontend.page.id
-            }
-          });
-
-          client.mutate({
-            mutation: mutations.LOCAL_SELECT_WEBSITE,
-            variables: {
-              id: data.frontend.website.id
-            }
-          });
-
-          client.mutate({
-            mutation: mutations.LOCAL_SELECT_LANGUAGE,
-            variables: {
-              id: data.frontend.language.id
-            }
-          });
 
 
 
@@ -210,7 +184,6 @@ class Application extends React.Component<IProperties, IState> {
                 content={data.frontend.page.content}
                 componentModule={ComponentsModule}
                 pluginModule={PluginsModule}
-                context={this.state.context}
                 plugins={['navigations', 'languages']}
                 client={client}
               />
@@ -219,6 +192,29 @@ class Application extends React.Component<IProperties, IState> {
         }}
       </Query>
     );
+  }
+
+  private setContext(client: LooseObject, frontend: LooseObject): Promise<any> {
+    return Promise.all([
+      client.mutate({
+        mutation: mutations.LOCAL_SELECT_PAGE,
+        variables: { 
+          page: frontend.page 
+        }
+      }),
+      client.mutate({
+        mutation: mutations.LOCAL_SELECT_WEBSITE,
+        variables: { 
+          website: frontend.website 
+        }
+      }),
+      client.mutate({
+        mutation: mutations.LOCAL_SELECT_LANGUAGE,
+        variables: { 
+          language: frontend.language 
+        }
+      }
+    )]).then(() => this.setState({ contextLoading: false }));
   }
 
   private resolvePath(path: string) {

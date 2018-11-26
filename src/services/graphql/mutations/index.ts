@@ -1,33 +1,26 @@
 import gql from 'graphql-tag';
 
 const LOCAL_SELECT_LANGUAGE = gql`
-  mutation selectLanguage($id: ID!) {
-    setLanguage(id: $id) @client
+  mutation selectLanguage($language: Json!) {
+    setLanguage(language: $language) @client
   }
 `;
 
 const LOCAL_SELECT_PAGE = gql`
-  mutation selectPage($id: ID!) {
-    setPage(id: $id) @client
+  mutation selectPage($page: Json!) {
+    setPage(page: $page) @client
   }
 `;
 
 const LOCAL_SELECT_PROJECT = gql`
-  mutation selectProject($id: ID!) {
-    setProject(id: $id) @client
+  mutation selectProject($project: Json!) {
+    setProject(project: $project) @client
   }
 `;
 
 const LOCAL_SELECT_WEBSITE = gql`
-  mutation selectWebsite($id: ID!) {
-    setWebsite(id: $id) @client
-  }
-`;
-
-const LOCAL_SELECT_PROJECT_WEBSITE = gql`
-  mutation selectProjectWebsite($project: ID!, $website: ID!) {
-    setProject(id: $project) @client
-    setWebsite(id: $website) @client
+  mutation selectWebsite($website: Json!) {
+    setWebsite(website: $website) @client
   }
 `;
 
@@ -35,6 +28,5 @@ export {
   LOCAL_SELECT_LANGUAGE,
   LOCAL_SELECT_PAGE,
   LOCAL_SELECT_PROJECT,
-  LOCAL_SELECT_PROJECT_WEBSITE,
   LOCAL_SELECT_WEBSITE
 }
