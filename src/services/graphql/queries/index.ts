@@ -3,16 +3,16 @@ import gql from 'graphql-tag';
 const FRONTEND = gql`
   query frontend($url: String!) {
     frontend( where: { url: $url } ) {
-      website {
+      website @connection(key: "website") {
         id
         title
       }
-      language {
+      language @connection(key: "language") {
         id
         code
         name
       }
-      page {
+      page @connection(key: "page") {
         id
         name
         content

@@ -2,14 +2,10 @@ import { InMemoryCache } from 'apollo-cache-inmemory';
 import ApolloClient from 'apollo-client';
 import { ApolloLink } from 'apollo-link';
 import { BatchHttpLink } from 'apollo-link-batch-http';
-import { withClientState } from 'apollo-link-state';
 
-import { defaults, resolvers, typeDefs } from './local';
-import * as mutations from './mutations';
 import * as queries from './queries';
 
-
-let graphqlServer = process.env.REACT_APP_GRAPHQL_SERVER
+let graphqlServer = process.env.REACT_APP_GRAPHQL_SERVER;
 if (!graphqlServer) {
   // tslint:disable-next-line:no-console
   console.log(`Server for GraphQL is not set. Please setup .env file correctly...`);
@@ -17,14 +13,6 @@ if (!graphqlServer) {
 }
 
 const cache = new InMemoryCache();
-
-const stateLink = withClientState({
-  cache,
-  defaults,
-  resolvers,
-  typeDefs
-});
-
 
 const httpLink = new BatchHttpLink({
   uri: graphqlServer,
@@ -34,7 +22,6 @@ const client = new ApolloClient({
   cache,
   connectToDevTools: true,
   link: ApolloLink.from([
-    stateLink,
     httpLink
   ]),
   ssrForceFetchDelay: 100,
@@ -42,6 +29,5 @@ const client = new ApolloClient({
 
 export {
   client,
-  queries,
-  mutations
+  queries
 };

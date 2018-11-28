@@ -1,11 +1,12 @@
-import { LightweightComposer } from '@foxer360/composer';
+import { LightweightComposer } from '@source/composer';
 
-import { mutations, queries } from '@source/services/graphql';
+import { queries, client } from '@source/services/graphql';
 import { ComponentsModule, PluginsModule } from '@source/services/modules';
 import * as React from 'react';
 
 import { Query } from 'react-apollo';
 import { Helmet } from 'react-helmet';
+import gql from 'graphql-tag';
 
 export interface IProperties {
   server?: string;
@@ -32,21 +33,18 @@ export interface ISeoPluginData {
   googlePlusTitle?: string;
   googlePlusPublisher?: string;
   googlePlusImage?: string;
+  seo?: LooseObject;
 }
 
 export interface IState {
-  contextLoading: any;
 }
 
 class Application extends React.Component<IProperties, IState> {
 
   constructor(props: IProperties) {
     super(props);
-
-    this.state = {
-      contextLoading: null,
-    };
   }
+
   public componentWillReceiveProps({ location: { pathname: newPath } }: LooseObject) {
     const { location: { pathname: oldPath } } = this.props;
 
@@ -67,11 +65,12 @@ class Application extends React.Component<IProperties, IState> {
 
     return (
       <Query
+        onCompleted={this.setContext}
         query={queries.FRONTEND}
         variables={{ url: path }}
       >
-        {({ loading, data, error, client }) => {
-
+        {({ loading, data, error }: LooseObject) => {
+          
           if (!data) {
             return <span>Loading page...</span>;
           }
@@ -87,15 +86,6 @@ class Application extends React.Component<IProperties, IState> {
           if (!data.frontend.page.content) {
             return <span>Content of page was not found...</span>;
           }
-
-          if (this.state.contextLoading === null) {
-            this.setState({ contextLoading: true }, () => this.setContext(client, data.frontend))
-          }
-
-          if (this.state.contextLoading === true) {
-            return <span>Loading page...</span>;
-          }
-
 
           let fullUrl = path;
           if (this.props.server && this.props.server.length > 1) {
@@ -152,9 +142,6 @@ class Application extends React.Component<IProperties, IState> {
             googlePlusImage = seo.googlePlusImage;
           }
 
-
-
-
           return (
             <>
               <Helmet>
@@ -194,29 +181,29 @@ class Application extends React.Component<IProperties, IState> {
     );
   }
 
-  private setContext(client: LooseObject, frontend: LooseObject): Promise<any> {
-    return Promise.all([
-      client.mutate({
-        mutation: mutations.LOCAL_SELECT_PAGE,
-        variables: { 
-          page: frontend.page 
-        }
-      }),
-      client.mutate({
-        mutation: mutations.LOCAL_SELECT_WEBSITE,
-        variables: { 
-          website: frontend.website 
-        }
-      }),
-      client.mutate({
-        mutation: mutations.LOCAL_SELECT_LANGUAGE,
-        variables: { 
-          language: frontend.language 
-        }
+  private setContext = ({ 
+    frontend: {
+      language,
+      page,
+      website
+    }
+  }) => {
+    const query = gql`
+      query {
+        language,
+        page,
+        website
       }
-    )]).then(() => this.setState({ contextLoading: false }));
+    `;
+    client.writeQuery({
+      query,
+      data: {
+        language,
+        page,
+        website
+      },
+    });
   }
-
   private resolvePath(path: string) {
     if (!path) {
       return null;
