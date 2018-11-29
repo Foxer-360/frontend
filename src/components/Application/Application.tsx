@@ -7,6 +7,29 @@ import * as React from 'react';
 import { Query } from 'react-apollo';
 import { Helmet } from 'react-helmet';
 import gql from 'graphql-tag';
+import { adopt } from 'react-adopt';
+
+const GET_CONTEXT = gql`
+{
+  page @client
+  language @client
+  website @client
+  languages @client
+  navigations @client
+}
+`;
+
+const GET_PAGES_URLS = gql`
+  query pagesUrls($languageCode: String) {
+    pagesUrls(where: { languageCode: $languageCode }) {
+      id
+      page
+      url
+      name
+      description
+    }
+  }
+`;
 
 export interface IProperties {
   server?: string;
@@ -37,12 +60,21 @@ export interface ISeoPluginData {
 }
 
 export interface IState {
+  frontend?: LooseObject;
 }
 
 class Application extends React.Component<IProperties, IState> {
 
   constructor(props: IProperties) {
     super(props);
+    this.state = {
+      frontend: null
+    };
+  }
+
+  public componentDidMount() {
+    const { location: { pathname } } = this.props;
+    this.fetchFrontend(pathname);
   }
 
   public componentWillReceiveProps({ location: { pathname: newPath } }: LooseObject) {
@@ -52,8 +84,20 @@ class Application extends React.Component<IProperties, IState> {
       window.scroll({
         behavior: 'smooth',
         top: 0,
-    });
+      });
+      this.fetchFrontend(newPath);
     }
+  }
+
+  fetchFrontend = (path) => {
+    client.query({
+      query: queries.FRONTEND,
+      variables: { url: path}
+    }).then(({ data: { frontend } }: LooseObject) => 
+      this.setState({ frontend }, () => {
+        this.setContext(frontend);
+      })
+    );
   }
 
   public render() {
@@ -62,28 +106,31 @@ class Application extends React.Component<IProperties, IState> {
     if (!path) {
       return null;
     }
+    const ComposedQuery = this.getComposedQuery();
 
     return (
-      <Query
-        onCompleted={this.setContext}
-        query={queries.FRONTEND}
+      <ComposedQuery
         variables={{ url: path }}
       >
-        {({ loading, data, error }: LooseObject) => {
-          
-          if (!data) {
-            return <span>Loading page...</span>;
+        {({ 
+          getContext: { 
+            page, 
+            language,
+            navigations,
+            languages,
+            website
+          },
+          getPagesUrls: {
+            loading: getPagesUrlsLoading,
+            error: getPagesUrlsError
           }
+          }: LooseObject) => {
 
-          if (error) {
-            return <span>Some error occured...</span>;
-          }
-
-          if (!data.frontend) {
+          if (!this.state.frontend) {
             return <span>Page not found...</span>;
           }
 
-          if (!data.frontend.page.content) {
+          if (!this.state.frontend.page.content) {
             return <span>Content of page was not found...</span>;
           }
 
@@ -92,9 +139,9 @@ class Application extends React.Component<IProperties, IState> {
             fullUrl = `${this.props.server}${path}`;
           }
 
-          const seo = data.frontend.seo as ISeoPluginData;
+          const seo = this.state.frontend.seo as ISeoPluginData;
 
-          let title = data.frontend.page.name as string;
+          let title = this.state.frontend.page.name as string;
           if (seo && seo.title) {
             title = seo.title;
           }
@@ -168,7 +215,7 @@ class Application extends React.Component<IProperties, IState> {
               </Helmet>
 
               <LightweightComposer
-                content={data.frontend.page.content}
+                content={this.state.frontend.page.content}
                 componentModule={ComponentsModule}
                 pluginModule={PluginsModule}
                 plugins={['navigations', 'languages']}
@@ -177,30 +224,56 @@ class Application extends React.Component<IProperties, IState> {
             </>
           );
         }}
-      </Query>
+      </ComposedQuery>
     );
   }
 
-  private setContext = ({ 
-    frontend: {
-      language,
-      page,
-      website
+  private getComposedQuery = () => adopt({
+    getContext: ({ render }) => (
+      <Query query={GET_CONTEXT} >
+        {({ data }) => render(data)}
+      </Query>
+    ),
+    getPagesUrls: ({ render, getContext: { language }, getContext }) => {
+
+      if (!language) { return render({}); }
+
+      return(
+        <Query query={GET_PAGES_URLS} variables={{ languageCode: language.code }}>
+          {(data) => {
+            console.log(getContext);
+            return render(data);
+          }}
+        </Query>
+      );
     }
-  }) => {
+  })
+
+  private setContext = (frontend) => {
+    const { 
+      language,
+      languages,
+      page,
+      website,
+      navigations
+    } = frontend;
     const query = gql`
       query {
         language,
+        languages,
         page,
-        website
+        website,
+        navigations
       }
     `;
     client.writeQuery({
       query,
       data: {
         language,
+        languages,
         page,
-        website
+        website,
+        navigations
       },
     });
   }

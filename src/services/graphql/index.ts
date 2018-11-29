@@ -2,6 +2,7 @@ import { InMemoryCache } from 'apollo-cache-inmemory';
 import ApolloClient from 'apollo-client';
 import { ApolloLink } from 'apollo-link';
 import { BatchHttpLink } from 'apollo-link-batch-http';
+import { withClientState } from 'apollo-link-state';
 
 import * as queries from './queries';
 
@@ -14,6 +15,21 @@ if (!graphqlServer) {
 
 const cache = new InMemoryCache();
 
+const stateLink = withClientState({
+  cache,
+  defaults: {
+    website: null,
+    languages: null,
+    language: null,
+    page: null,
+    navigations: null
+  },
+  resolvers: {
+    Mutation: {
+    }
+  }
+});
+
 const httpLink = new BatchHttpLink({
   uri: graphqlServer,
 });
@@ -22,6 +38,7 @@ const client = new ApolloClient({
   cache,
   connectToDevTools: true,
   link: ApolloLink.from([
+    stateLink,
     httpLink
   ]),
   ssrForceFetchDelay: 100,

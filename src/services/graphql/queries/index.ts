@@ -17,7 +17,27 @@ const FRONTEND = gql`
         name
         content
       }
-      seo
+      navigations @connection(key: "navigations") {
+        id
+        name
+        nodes {
+          id
+          page
+          title
+          link
+          order
+          parent
+          __typename
+        }
+        __typename
+      },
+      languages @connection(key: "languages") {
+        id
+        code
+        name
+      },
+      seo,
+
     }
   }
 `;
