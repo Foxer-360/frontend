@@ -99,6 +99,7 @@ class Application extends React.Component<IProperties, IState> {
               <Helmet>
                 <meta name="description" content={seo.description} />
                 <meta name="keywords" content={seo.keywords} />
+                <meta name="theme-color" content={seo.themeColor} />
                 <title>{seo.title || data.frontend.page.name}</title>
 
                 {/* Facebook */}
