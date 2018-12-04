@@ -12,24 +12,22 @@ export interface IProperties {
 }
 
 export interface ISeoPluginData {
-  title?: string;
-  description?: string;
-  focusKeyword?: string;
-  url?: string;
-  // fb
-  facebookTitle?: string;
-  facebookPublisher?: string;
-  facebookDescription?: string;
-  facebookImage?: string;
-  // twitter
-  twitterTitle?: string;
-  twitterPublisher?: string;
-  twitterDescription?: string;
-  twitterImage?: string;
-  // google plus
-  googlePlusTitle?: string;
-  googlePlusPublisher?: string;
-  googlePlusImage?: string;
+  title: string;
+  description: string;
+  themeColor: string;
+  keywords: string;
+  focusKeyword: string;
+  defaultImage: string;
+  facebook: {
+    title: string;
+    description: string;
+    image: string;
+  };
+  twitter: {
+    title: string;
+    description: string;
+    image: string;
+  };
 }
 
 export interface IState {
@@ -90,67 +88,9 @@ class Application extends React.Component<IProperties, IState> {
             fullUrl = `${this.props.server}${path}`;
           }
 
-          const seo = data.frontend.seo as ISeoPluginData;
-
-          let title = data.frontend.page.name as string;
-          if (seo && seo.title) {
-            title = seo.title;
-          }
-          let description = '';
-          if (seo && seo.description) {
-            description = seo.description;
-          }
-          let keywords = '';
-          if (seo && seo.focusKeyword) {
-            keywords = seo.focusKeyword;
-          }
-
-          let facebookTitle = '';
-          if (seo && seo.facebookTitle) {
-            facebookTitle = seo.facebookTitle;
-          }
-          // let facebookPublisher = '';
-          // if (seo && seo.facebookPublisher) {
-          //   facebookPublisher = seo.facebookPublisher;
-          // }
-          let facebookDescription = '';
-          if (seo && seo.facebookDescription) {
-            facebookDescription = seo.facebookDescription;
-          }
-          let facebookImage = '';
-          if (seo && seo.facebookImage) {
-            facebookImage = seo.facebookImage;
-          }
-
-          let twitterTitle = '';
-          if (seo && seo.twitterTitle) {
-            twitterTitle = seo.twitterTitle;
-          }
-          // let twitterPublisher = '';
-          // if (seo && seo.twitterPublisher) {
-          //   twitterPublisher = seo.twitterPublisher;
-          // }
-          let twitterDescription = '';
-          if (seo && seo.twitterDescription) {
-            twitterDescription = seo.twitterDescription;
-          }
-          let twitterImage = '';
-          if (seo && seo.twitterImage) {
-            twitterImage = seo.twitterImage;
-          }
-
-          let googlePlusTitle = '';
-          if (seo && seo.googlePlusTitle) {
-            googlePlusTitle = seo.googlePlusTitle;
-          }
-          // let googlePlusPublisher = '';
-          // if (seo && seo.googlePlusPublisher) {
-          //   googlePlusPublisher = seo.googlePlusPublisher;
-          // }
-          let googlePlusImage = '';
-          if (seo && seo.googlePlusImage) {
-            googlePlusImage = seo.googlePlusImage;
-          }
+          const seo = this.formatSeoData(data.frontend.seo as ISeoPluginData);
+          // tslint:disable
+          console.log(seo);
 
           this.state.context.writeProperty('website', data.frontend.website.id);
           this.state.context.writeProperty('language', data.frontend.language.id);
@@ -159,26 +99,22 @@ class Application extends React.Component<IProperties, IState> {
           return (
             <>
               <Helmet>
-                <meta name="description" content={description} />
-                <meta name="keywords" content={keywords} />
-                <title>{title}</title>
+                <meta name="description" content={seo.description} />
+                <meta name="keywords" content={seo.keywords} />
+                <title>{seo.title || data.frontend.page.name}</title>
 
                 {/* Facebook */}
                 <meta property="og:url" content={fullUrl} />
                 <meta property="og:type" content="website" />
-                <meta property="og:title" content={facebookTitle} />
-                <meta property="og:description" content={facebookDescription} />
-                <meta property="og:image" content={facebookImage} />
+                <meta property="og:title" content={seo.facebook.title} />
+                <meta property="og:description" content={seo.facebook.description} />
+                <meta property="og:image" content={seo.facebook.image || seo.defaultImage} />
 
                 {/* Twitter */}
                 <meta name="twitter:card" content="summary_large_image" />
-                <meta name="twitter:title" content={twitterTitle} />
-                <meta name="twitter:description" content={twitterDescription} />
-                <meta name="twitter:image" content={twitterImage} />
-
-                {/* Google */}
-                <meta itemProp="name" content={googlePlusTitle} />
-                <meta itemProp="image" content={googlePlusImage} />
+                <meta name="twitter:title" content={seo.twitter.title} />
+                <meta name="twitter:description" content={seo.twitter.description} />
+                <meta name="twitter:image" content={seo.twitter.image || seo.defaultImage} />
               </Helmet>
 
               <LightweightComposer
@@ -194,6 +130,27 @@ class Application extends React.Component<IProperties, IState> {
         }}
       </Query>
     );
+  }
+
+  private formatSeoData(seo: ISeoPluginData): ISeoPluginData {
+    return {
+      defaultImage: seo && seo.defaultImage || '',
+      description: seo && seo.description || '',
+      facebook: {
+        description: seo && seo.facebook && seo.facebook.description || '',
+        image: seo && seo.facebook && seo.facebook.image || '',
+        title: seo && seo.facebook && seo.facebook.title || ''
+      },
+      focusKeyword: seo && seo.focusKeyword || '',
+      keywords: seo && seo.keywords || '',
+      themeColor: seo && seo.themeColor || '',
+      title: seo && seo.title || '',
+      twitter: {
+        description: seo && seo.twitter && seo.twitter.description || '',
+        image: seo && seo.twitter && seo.twitter.image || '',
+        title: seo && seo.twitter && seo.twitter.title || '',
+      }
+    };
   }
 
   private resolvePath(path: string) {
