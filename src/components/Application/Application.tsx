@@ -89,8 +89,6 @@ class Application extends React.Component<IProperties, IState> {
           }
 
           const seo = this.formatSeoData(data.frontend.seo as ISeoPluginData);
-          // tslint:disable
-          console.log(seo);
 
           this.state.context.writeProperty('website', data.frontend.website.id);
           this.state.context.writeProperty('language', data.frontend.language.id);
