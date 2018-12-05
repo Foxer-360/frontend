@@ -72,7 +72,8 @@
     "server": "node build/server.js",
     "start": "node scripts/start.js",
     "test": "node scripts/test.js --env=jsdom",
-    "updateDeps": "yarn removeDeps && yarn deps"
+    "updateDeps": "yarn removeDeps && yarn deps",
+    "magic": "yarn updateDeps && rm -rf components/kohinoor/node_modules/@types && yarn start"
   },
   "devDependencies": {
     "@babel/cli": "^7.0.0",
