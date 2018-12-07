@@ -18,11 +18,11 @@ const cache = new InMemoryCache();
 const stateLink = withClientState({
   cache,
   defaults: {
-    website: null,
+    websiteData: null,
     languages: null,
-    language: null,
-    page: null,
-    navigations: null
+    languageData: null,
+    pageData: null,
+    navigationsData: null
   },
   resolvers: {
     Mutation: {

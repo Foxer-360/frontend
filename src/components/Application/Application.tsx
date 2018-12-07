@@ -11,11 +11,11 @@ import { adopt } from 'react-adopt';
 
 const GET_CONTEXT = gql`
 {
-  page @client
-  language @client
-  website @client
+  pageData @client
+  languageData @client
+  websiteData @client
   languages @client
-  navigations @client
+  navigationsData @client
 }
 `;
 
@@ -93,11 +93,10 @@ class Application extends React.Component<IProperties, IState> {
     client.query({
       query: queries.FRONTEND,
       variables: { url: path}
-    }).then(({ data: { frontend } }: LooseObject) => 
-      this.setState({ frontend }, () => {
-        this.setContext(frontend);
-      })
-    );
+    }).then(async ({ data: { frontend } }: LooseObject) => {
+      await this.setContext(frontend);
+      this.setState({ frontend });
+    });
   }
 
   public render() {
@@ -129,7 +128,7 @@ class Application extends React.Component<IProperties, IState> {
           if (!this.state.frontend) {
             return <span>Page not found...</span>;
           }
-
+          console.log(this.state.frontend);
           if (!this.state.frontend.page.content) {
             return <span>Content of page was not found...</span>;
           }
@@ -249,33 +248,35 @@ class Application extends React.Component<IProperties, IState> {
     }
   })
 
-  private setContext = (frontend) => {
+  private setContext = async (frontend) => {
     const { 
-      language,
+      language: languageData,
       languages,
-      page,
-      website,
-      navigations
+      page: pageData,
+      website: websiteData,
+      navigations: navigationsData
     } = frontend;
+    console.log('setContext', frontend);
     const query = gql`
       query {
-        language,
+        languageData,
         languages,
-        page,
-        website,
-        navigations
+        pageData,
+        websiteData,
+        navigationsData
       }
     `;
-    client.writeQuery({
+    await client.writeQuery({
       query,
       data: {
-        language,
+        languageData,
         languages,
-        page,
-        website,
-        navigations
+        pageData,
+        websiteData,
+        navigationsData
       },
     });
+    console.log('iam here');
   }
   private resolvePath(path: string) {
     if (!path) {
