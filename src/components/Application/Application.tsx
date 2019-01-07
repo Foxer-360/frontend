@@ -14,7 +14,7 @@ const GET_CONTEXT = gql`
   pageData @client
   languageData @client
   websiteData @client
-  languages @client
+  languagesData @client
   navigationsData @client
 }
 `;
@@ -92,7 +92,7 @@ class Application extends React.Component<IProperties, IState> {
   fetchFrontend = (path) => {
     client.query({
       query: queries.FRONTEND,
-      variables: { url: path}
+      variables: { url: path }
     }).then(async ({ data: { frontend } }: LooseObject) => {
       await this.setContext(frontend);
       this.setState({ frontend });
@@ -111,14 +111,7 @@ class Application extends React.Component<IProperties, IState> {
       <ComposedQuery
         variables={{ url: path }}
       >
-        {({ 
-          getContext: { 
-            page, 
-            language,
-            navigations,
-            languages,
-            website
-          },
+        {({
           getPagesUrls: {
             loading: getPagesUrlsLoading,
             error: getPagesUrlsError
@@ -128,7 +121,7 @@ class Application extends React.Component<IProperties, IState> {
           if (!this.state.frontend) {
             return <span>Page not found...</span>;
           }
-          console.log(this.state.frontend);
+
           if (!this.state.frontend.page.content) {
             return <span>Content of page was not found...</span>;
           }
@@ -240,7 +233,6 @@ class Application extends React.Component<IProperties, IState> {
       return(
         <Query query={GET_PAGES_URLS} variables={{ languageCode: language.code }}>
           {(data) => {
-            console.log(getContext);
             return render(data);
           }}
         </Query>
@@ -256,11 +248,10 @@ class Application extends React.Component<IProperties, IState> {
       website: websiteData,
       navigations: navigationsData
     } = frontend;
-    console.log('setContext', frontend);
     const query = gql`
       query {
         languageData,
-        languages,
+        languagesData,
         pageData,
         websiteData,
         navigationsData
@@ -270,13 +261,12 @@ class Application extends React.Component<IProperties, IState> {
       query,
       data: {
         languageData,
-        languages,
+        languagesData: languages,
         pageData,
         websiteData,
         navigationsData
       },
     });
-    console.log('iam here');
   }
   private resolvePath(path: string) {
     if (!path) {
