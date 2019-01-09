@@ -1,22 +1,47 @@
 import gql from 'graphql-tag';
 
-export const FRONTEND = gql`
+const FRONTEND = gql`
   query frontend($url: String!) {
     frontend( where: { url: $url } ) {
-      website {
+      website @connection(key: "websiteData") {
         id
         title
       }
-      language {
+      language @connection(key: "languageData") {
         id
         code
         name
       }
-      page {
+      page @connection(key: "pageData") {
+        id
         name
         content
       }
-      seo
+      navigations @connection(key: "navigationsData") {
+        id
+        name
+        nodes {
+          id
+          page
+          title
+          link
+          order
+          parent
+          __typename
+        }
+        __typename
+      },
+      languages @connection(key: "languages") {
+        id
+        code
+        name
+      },
+      seo,
+
     }
   }
 `;
+
+export {
+  FRONTEND
+};

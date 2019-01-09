@@ -7,7 +7,7 @@ interface IProperties {
   content: string;
   client: {
     cache: any;
-  }
+  };
   manifest: any;
   helmet: HelmetData;
 }
