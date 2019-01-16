@@ -1,9 +1,35 @@
-import { Context, LightweightComposer } from '@foxer360/composer';
-import * as queries from '@source/services/graphql/queries';
+import { LightweightComposer } from '@source/composer';
+
+import { queries, client } from '@source/services/graphql';
 import { ComponentsModule, PluginsModule } from '@source/services/modules';
 import * as React from 'react';
+
 import { Query } from 'react-apollo';
 import { Helmet } from 'react-helmet';
+import gql from 'graphql-tag';
+import { adopt } from 'react-adopt';
+
+const GET_CONTEXT = gql`
+{
+  pageData @client
+  languageData @client
+  websiteData @client
+  languagesData @client
+  navigationsData @client
+}
+`;
+
+const GET_PAGES_URLS = gql`
+  query pagesUrls($languageCode: String) {
+    pagesUrls(where: { languageCode: $languageCode }) {
+      id
+      page
+      url
+      name
+      description
+    }
+  }
+`;
 
 export interface IProperties {
   server?: string;
@@ -31,18 +57,23 @@ export interface ISeoPluginData {
 }
 
 export interface IState {
-  context: Context;
+  frontend?: LooseObject;
 }
 
 class Application extends React.Component<IProperties, IState> {
 
   constructor(props: IProperties) {
     super(props);
-
     this.state = {
-      context: new Context(),
+      frontend: null
     };
   }
+
+  public componentDidMount() {
+    const { location: { pathname } } = this.props;
+    this.fetchFrontend(pathname);
+  }
+
   public componentWillReceiveProps({ location: { pathname: newPath } }: LooseObject) {
     const { location: { pathname: oldPath } } = this.props;
 
@@ -50,8 +81,19 @@ class Application extends React.Component<IProperties, IState> {
       window.scroll({
         behavior: 'smooth',
         top: 0,
-    });
+      });
+      this.fetchFrontend(newPath);
     }
+  }
+
+  fetchFrontend = (path) => {
+    client.query({
+      query: queries.FRONTEND,
+      variables: { url: path }
+    }).then(async ({ data: { frontend } }: LooseObject) => {
+      await this.setContext(frontend);
+      this.setState({ frontend });
+    });
   }
 
   public render() {
@@ -60,26 +102,24 @@ class Application extends React.Component<IProperties, IState> {
     if (!path) {
       return null;
     }
+    const ComposedQuery = this.getComposedQuery();
 
     return (
-      <Query
-        query={queries.FRONTEND}
+      <ComposedQuery
         variables={{ url: path }}
       >
-        {({ loading, data, error, client }) => {
-          if (!data) {
-            return <span>Loading page...</span>;
+        {({
+          getPagesUrls: {
+            loading: getPagesUrlsLoading,
+            error: getPagesUrlsError
           }
+          }: LooseObject) => {
 
-          if (error) {
-            return <span>Some error occured...</span>;
-          }
-
-          if (!data.frontend) {
+          if (!this.state.frontend) {
             return <span>Page not found...</span>;
           }
 
-          if (!data.frontend.page.content) {
+          if (!this.state.frontend.page.content) {
             return <span>Content of page was not found...</span>;
           }
 
@@ -88,11 +128,7 @@ class Application extends React.Component<IProperties, IState> {
             fullUrl = `${this.props.server}${path}`;
           }
 
-          const seo = this.formatSeoData(data.frontend.seo as ISeoPluginData);
-
-          this.state.context.writeProperty('website', data.frontend.website.id);
-          this.state.context.writeProperty('language', data.frontend.language.id);
-          this.state.context.writeProperty('languageCode', data.frontend.language.code);
+          const seo = this.formatSeoData(this.state.frontend.seo as ISeoPluginData);
 
           return (
             <>
@@ -100,7 +136,7 @@ class Application extends React.Component<IProperties, IState> {
                 <meta name="description" content={seo.description} />
                 <meta name="keywords" content={seo.keywords} />
                 <meta name="theme-color" content={seo.themeColor} />
-                <title>{seo.title || data.frontend.page.name}</title>
+                <title>{seo.title || this.state.frontend.page.name}</title>
 
                 {/* Facebook */}
                 <meta property="og:url" content={fullUrl} />
@@ -117,18 +153,66 @@ class Application extends React.Component<IProperties, IState> {
               </Helmet>
 
               <LightweightComposer
-                content={data.frontend.page.content}
+                content={this.state.frontend.page.content}
                 componentModule={ComponentsModule}
                 pluginModule={PluginsModule}
-                context={this.state.context}
                 plugins={['navigations', 'languages']}
                 client={client}
               />
             </>
           );
         }}
-      </Query>
+      </ComposedQuery>
     );
+  }
+
+  private getComposedQuery = () => adopt({
+    getContext: ({ render }) => (
+      <Query query={GET_CONTEXT} >
+        {({ data }) => render(data)}
+      </Query>
+    ),
+    getPagesUrls: ({ render, getContext: { language }, getContext }) => {
+
+      if (!language) { return render({}); }
+
+      return(
+        <Query query={GET_PAGES_URLS} variables={{ languageCode: language.code }}>
+          {(data) => {
+            return render(data);
+          }}
+        </Query>
+      );
+    }
+  })
+
+  private setContext = async (frontend) => {
+    const { 
+      language: languageData,
+      languages,
+      page: pageData,
+      website: websiteData,
+      navigations: navigationsData
+    } = frontend;
+    const query = gql`
+      query {
+        languageData,
+        languagesData,
+        pageData,
+        websiteData,
+        navigationsData
+      }
+    `;
+    await client.writeQuery({
+      query,
+      data: {
+        languageData,
+        languagesData: languages,
+        pageData,
+        websiteData,
+        navigationsData
+      },
+    });
   }
 
   private formatSeoData(seo: ISeoPluginData): ISeoPluginData {
