@@ -1,7 +1,7 @@
 import { InMemoryCache } from 'apollo-cache-inmemory';
 import ApolloClient from 'apollo-client';
 import { ApolloLink } from 'apollo-link';
-import { BatchHttpLink } from 'apollo-link-batch-http';
+import { HttpLink } from 'apollo-link-http';
 import { withClientState } from 'apollo-link-state';
 
 import * as queries from './queries';
@@ -30,7 +30,7 @@ const stateLink = withClientState({
   }
 });
 
-const httpLink = new BatchHttpLink({
+const httpLink = new HttpLink({
   uri: graphqlServer,
 });
 
