@@ -36,6 +36,14 @@ const FRONTEND = gql`
         code
         name
       },
+      datasourceItems @connection(key: "datasourceItems") {
+        id
+        content
+        slug
+        datasource {
+          type
+        }
+      },
       seo,
 
     }

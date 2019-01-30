@@ -16,6 +16,7 @@ const GET_CONTEXT = gql`
   websiteData @client
   languagesData @client
   navigationsData @client
+  datasourceItems @client
 }
 `;
 
@@ -192,7 +193,8 @@ class Application extends React.Component<IProperties, IState> {
       languages,
       page: pageData,
       website: websiteData,
-      navigations: navigationsData
+      navigations: navigationsData,
+      datasourceItems,
     } = frontend;
     const query = gql`
       query {
@@ -200,7 +202,8 @@ class Application extends React.Component<IProperties, IState> {
         languagesData,
         pageData,
         websiteData,
-        navigationsData
+        navigationsData,
+        datasourceItems,
       }
     `;
     await client.writeQuery({
@@ -210,7 +213,8 @@ class Application extends React.Component<IProperties, IState> {
         languagesData: languages,
         pageData,
         websiteData,
-        navigationsData
+        navigationsData,
+        datasourceItems
       },
     });
   }
