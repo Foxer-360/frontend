@@ -50,8 +50,7 @@ class Container extends React.Component<IProperties, {}> {
             let stringifiedData = JSON.stringify(node.data);
             let replacedData = String(stringifiedData);
             let result;
-            
-            while (result = regex.exec(stringifiedData) && datasourceItems.length > 0) {
+            while ((result = regex.exec(stringifiedData)) && datasourceItems.length > 0) {
               if (result[1]) {
                 try {
                   const searchKeys = result[1].split(',');
