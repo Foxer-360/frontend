@@ -46,17 +46,17 @@ class Container extends React.Component<IProperties, {}> {
             
             const { datasourceItems } = data;
 
-            const regex = /%([^%]*)%/g;
+            const regex = /%cx,([^%]*)%/g;
             let stringifiedData = JSON.stringify(node.data);
             let replacedData = String(stringifiedData);
             let result;
-            while ((result = regex.exec(stringifiedData)) && datasourceItems.length > 0) {
+            while ((result = regex.exec(stringifiedData)) && datasourceItems && datasourceItems.length > 0) {
               if (result[1]) {
                 try {
                   const searchKeys = result[1].split(',');
                   if (Array.isArray(searchKeys) && searchKeys.length > 0) {
                     const getValueFromDatasourceItems = R.path(searchKeys);
-                    const replacement = getValueFromDatasourceItems(datasourceItems[datasourceItems.length - 1].content);
+                    const replacement = getValueFromDatasourceItems(datasourceItems.filter(item => item.content).map(item => item.content));
                     if (replacement) {
                       
                       replacedData = replacedData.replace(result[0], replacement);
@@ -69,6 +69,8 @@ class Container extends React.Component<IProperties, {}> {
             }
             
             const parsedData = JSON.parse(replacedData);
+
+            console.log(parsedData);
       
             return (
               <Comp
