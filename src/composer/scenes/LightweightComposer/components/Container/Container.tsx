@@ -1,9 +1,8 @@
 import { IComponentModule } from '@source/composer/types';
-import { Context } from '@source/composer/utils';
+import { Context, addContextInformationsFromDatasourceItems } from '@source/composer/utils';
 import * as React from 'react';
 import gql from 'graphql-tag';
 import { Query } from 'react-apollo';
-import * as R from 'ramda';
 
 const GET_CONTEXT = gql`{
   datasourceItems @client
@@ -46,29 +45,7 @@ class Container extends React.Component<IProperties, {}> {
             
             const { datasourceItems } = data;
 
-            const regex = /%cx,([^%]*)%/g;
-            let stringifiedData = JSON.stringify(node.data);
-            let replacedData = String(stringifiedData);
-            let result;
-            while ((result = regex.exec(stringifiedData)) && datasourceItems && datasourceItems.length > 0) {
-              if (result[1]) {
-                try {
-                  const searchKeys = result[1].split(',');
-                  if (Array.isArray(searchKeys) && searchKeys.length > 0) {
-                    const getValueFromDatasourceItems = R.path(searchKeys);
-                    const replacement = getValueFromDatasourceItems(datasourceItems.filter(item => item.content).map(item => item.content));
-                    if (replacement) {
-                      
-                      replacedData = replacedData.replace(result[0], replacement);
-                    }
-                  }    
-                } catch (e) {
-                  console.log(e);
-                }
-              }
-            }
-            
-            const parsedData = JSON.parse(replacedData);
+            const parsedData = addContextInformationsFromDatasourceItems(datasourceItems, node.data);
 
             console.log(parsedData);
       
