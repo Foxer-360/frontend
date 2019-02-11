@@ -38,6 +38,7 @@
     "postcss-loader": "2.0.8",
     "promise": "8.0.2",
     "raf": "3.4.1",
+    "ramda": "^0.26.1",
     "react": "^16.5.2",
     "react-adopt": "^0.6.0",
     "react-apollo": "^2.3.1",

@@ -1,5 +1,5 @@
 import { ILooseObject } from '@source/composer/types';
-import { Tabs, Icon, Popconfirm } from 'antd';
+import { Tabs, Icon, Popconfirm, Checkbox } from 'antd';
 import * as React from 'react';
 import { IFormSchema } from '../../FormBuilder';
 import InputRenderer from '../InputRenderer';
@@ -113,6 +113,13 @@ class ArrayInputs extends React.Component<IArrayInputsProps> {
 
     return (
       <Section title={this.props.title}>
+        <Checkbox
+          checked={false}
+          disabled={false}
+          onChange={this.onChange}
+        >
+          Dynamic source
+        </Checkbox>
         <Tabs
           type="editable-card"
           activeKey={this.props.activeTab.toString()}
