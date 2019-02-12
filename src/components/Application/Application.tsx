@@ -132,7 +132,7 @@ class Application extends React.Component<IProperties, IState> {
 
           const seo = this.formatSeoData(this.state.frontend.seo as ISeoPluginData);
 
-          const components = this.state.frontend.project.components.slice(',');
+          const components = this.state.frontend.project.components.split(',');
           const styles = ComponentsModule.getStyles(components);
 
           return (
