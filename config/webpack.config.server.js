@@ -1,5 +1,6 @@
 const path = require('path');
 const deps = require('./deps');
+const webpack = require('webpack');
 
 const appPath = path.resolve(__dirname, '../');
 const appServerPath = path.resolve(appPath, 'server');
@@ -55,12 +56,13 @@ module.exports = {
         test: /\.js$/,
         loader: 'babel-loader',
         query: {
-          presets: ['es2015', 'stage-0']
+          presets: ['es2015']
         },
         exclude: [
           path.resolve(appPath, 'node_modules'),
           deps.componentsPath,
-          deps.pluginsPath
+          deps.pluginsPath,
+          path.resolve(appPath, '../med')
         ]
       },
       {
@@ -104,7 +106,13 @@ module.exports = {
       }
     ]
   },
-  plugins: [],
+  plugins: [
+    new webpack.ProvidePlugin({
+      fetch: 'node-fetch',
+      window: ['global', 'window'],
+      document: ['global', 'document']
+    })
+  ],
   node: {
     dgram: 'empty',
     fs: 'empty',

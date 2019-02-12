@@ -1,6 +1,8 @@
 // tslint:disable
 import * as React from 'react';
 import { components, config, LibDefinition } from './config';
+import { client } from '../graphql';
+import gql from 'graphql-tag';
 
 // tslint:disable:max-classes-per-file
 
@@ -93,10 +95,21 @@ class ComponentsModule {
     return i.getForm(type);
   }
 
-  public getStyles() {
-    const res = config.components.map((lib) => {
-      return lib.paths.relative.style;
-    }).filter((style) => {
+  public getStyles(components?: string[]) {
+    let mapFce = (lib: LibDefinition) => {
+      if (components.includes(lib.name)) {
+        return lib.paths.relative.style;
+      }
+
+      return null;
+    };
+    if (!components || components.length < 1) {
+      mapFce = (lib: LibDefinition) => {
+        return lib.paths.relative.style;
+      };
+    }
+
+    const res = config.components.map(mapFce).filter((style) => {
       return style ? true : false;
     });
 
