@@ -7,7 +7,7 @@ import Application from '@source/components/Application';
 import { client } from '@source/services/graphql';
 import registerServiceWorker from '@source/services/serviceWorker';
 
-import '@source/styles/main.scss';
+// import '@source/styles/main.scss';
 
 ReactDOM.hydrate(
   <ApolloProvider client={client}>

@@ -17,6 +17,7 @@ const GET_CONTEXT = gql`
   languagesData @client
   navigationsData @client
   datasourceItems @client
+  project @client
 }
 `;
 
@@ -131,6 +132,9 @@ class Application extends React.Component<IProperties, IState> {
 
           const seo = this.formatSeoData(this.state.frontend.seo as ISeoPluginData);
 
+          const components = this.state.frontend.project.components.split(',');
+          const styles = ComponentsModule.getStyles();
+
           return (
             <>
               <Helmet>
@@ -138,6 +142,12 @@ class Application extends React.Component<IProperties, IState> {
                 <meta name="keywords" content={seo.keywords} />
                 <meta name="theme-color" content={seo.themeColor} />
                 <title>{seo.title || this.state.frontend.page.name}</title>
+
+                {/* Styles and favicon selected per project */}
+                {styles.map((style: string) => (
+                  <link rel="stylesheet" key={style} href={`http://localhost:3001${style}`} />
+                ))}
+                <link rel="shortcut icon" type="image/png" href={`http://localhost:3001/assets/${components[0]}/favicon.png`} />
 
                 {/* Facebook */}
                 <meta property="og:url" content={fullUrl} />
@@ -190,13 +200,14 @@ class Application extends React.Component<IProperties, IState> {
   private setContext = async (frontend) => {
 
     if (!frontend) { return; }
-    const { 
+    const {
       language: languageData,
       languages,
       page: pageData,
       website: websiteData,
       navigations: navigationsData,
       datasourceItems,
+      project
     } = frontend;
     const query = gql`
       query {
@@ -206,6 +217,7 @@ class Application extends React.Component<IProperties, IState> {
         websiteData,
         navigationsData,
         datasourceItems,
+        project
       }
     `;
     await client.writeQuery({
@@ -216,7 +228,8 @@ class Application extends React.Component<IProperties, IState> {
         pageData,
         websiteData,
         navigationsData,
-        datasourceItems
+        datasourceItems,
+        project
       },
     });
   }

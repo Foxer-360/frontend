@@ -45,7 +45,10 @@ const FRONTEND = gql`
         }
       },
       seo,
-
+      project {
+        id
+        components
+      }
     }
   }
 `;

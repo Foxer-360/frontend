@@ -8,10 +8,12 @@ import fetch from 'node-fetch';
 // Load config from .env file
 config();
 
+let graphqlServer = process.env.REACT_APP_GRAPHQL_SERVER;
 if (!process.env.REACT_APP_GRAPHQL_SERVER) {
   // tslint:disable-next-line:no-console
   console.log(`Server for GraphQL is not set. Please setup .env file correctly...`);
-  process.exit(1);
+  // process.exit(1);
+  graphqlServer = 'http://localhost:8000/graphql';
 }
 
 const cache = new InMemoryCache();
@@ -19,7 +21,7 @@ const cache = new InMemoryCache();
 const httpLink = createHttpLink({
   // tslint:disable-next-line:no-any
   fetch: fetch as any,
-  uri: process.env.REACT_APP_GRAPHQL_SERVER,
+  uri: graphqlServer,
 });
 
 const client = new ApolloClient({

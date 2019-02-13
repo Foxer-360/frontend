@@ -76,7 +76,8 @@ app.use((req: express.Request, res: express.Response, next: express.NextFunction
     res.status(500);
     res.end(`Some error occurres ! Message: ${err.message}`);
     // tslint:disable-next-line:no-console
-    console.log(err.message);
+    // console.log(err);
+    console.log(err.networkError.result);
   });
 });
 
