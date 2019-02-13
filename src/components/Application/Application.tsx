@@ -132,7 +132,15 @@ class Application extends React.Component<IProperties, IState> {
 
           const seo = this.formatSeoData(this.state.frontend.seo as ISeoPluginData);
 
-          const components = this.state.frontend.project.components.split(',');
+          let favicon = `http://localhost:3001/favicon.ico`;
+
+          if (this.state.frontend && this.state.frontend.project && this.state.frontend.project.components) {
+            const components = this.state.frontend.project.components.split(',') as string[] | [] as string[];
+            if (components.length > 0) {
+              favicon = `http://localhost:3001/assets/${components[0]}/favicon.png`;
+            }
+          }
+
           const styles = ComponentsModule.getStyles();
 
           return (
@@ -147,7 +155,7 @@ class Application extends React.Component<IProperties, IState> {
                 {styles.map((style: string) => (
                   <link rel="stylesheet" key={style} href={`http://localhost:3001${style}`} />
                 ))}
-                <link rel="shortcut icon" type="image/png" href={`http://localhost:3001/assets/${components[0]}/favicon.png`} />
+                <link rel="shortcut icon" type="image/png" href={favicon} />
 
                 {/* Facebook */}
                 <meta property="og:url" content={fullUrl} />
