@@ -15,6 +15,10 @@ if (!graphqlServer) {
 
 const cache = new InMemoryCache();
 
+if (window && (window as LooseObject).__APOLLO_STATE__) {
+  cache.restore((window as LooseObject).__APOLLO_STATE__);
+}
+
 const stateLink = withClientState({
   cache,
   defaults: {
@@ -22,7 +26,8 @@ const stateLink = withClientState({
     // languages: null,
     // languageData: null,
     // pageData: null,
-    // navigationsData: null
+    // navigationsData: null,
+    // project: null
   },
   resolvers: {
     Mutation: {

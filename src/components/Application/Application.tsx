@@ -37,6 +37,8 @@ export interface IProperties {
   server?: string;
   // tslint:disable-next-line:no-any
   location?: any;
+  // This is because of SSR
+  frontend?: LooseObject;
 }
 
 export interface ISeoPluginData {
@@ -66,8 +68,12 @@ class Application extends React.Component<IProperties, IState> {
 
   constructor(props: IProperties) {
     super(props);
+    let frontend = null;
+    if (props.frontend) {
+      frontend = { ...props.frontend };
+    }
     this.state = {
-      frontend: null
+      frontend,
     };
   }
 

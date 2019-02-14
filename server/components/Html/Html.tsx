@@ -19,8 +19,7 @@ const Html = ({ content, client: { cache }, manifest, helmet }: IProperties) => 
       <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no" />
       {helmet.meta.toComponent()}
 
-      <link href={`/${manifest['main.css']}`} rel="stylesheet" type="text/css"/>
-      <link href="/styles/kohinoor.css" rel="stylesheet" type="text/css" />
+      <link href={`/${manifest['static/media/simplemde.min.css']}`} rel="stylesheet" type="text/css"/>
       {helmet.link.toComponent()}
 
       {helmet.title.toComponent()}

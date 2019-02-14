@@ -10,8 +10,35 @@ import { RouteComponentProps, StaticRouter } from 'react-router';
 import { Route } from 'react-router-dom';
 import Application from '../src/components/Application';
 import Html from './components/Html';
-import { client } from './graphql';
-import { clearTerminal } from './utils';
+import { client, fetchFrontend } from './graphql';
+import { clearTerminal, Colors, logger } from './utils';
+import gql from 'graphql-tag';
+import './utils/document';
+
+// Define log function
+const log = (...args) => {
+  logger.enable();
+  console.log(...args);
+  logger.disable();
+};
+
+// Define Timer
+const getTimerText = (url: string) => {
+  return `Response for ${url} in ${Colors.Foregrounds.Green}${Colors.System.Bright}`;
+};
+
+const time = (url: string) => {
+  console.time(getTimerText(url));
+};
+
+const timeEnd = (url: string) => {
+  logger.enable();
+  console.timeEnd(getTimerText(url));
+  console.log(Colors.System.Reset);
+  logger.disable();
+};
+
+logger.disable();
 
 // Clear terminal
 clearTerminal();
@@ -21,16 +48,50 @@ config();
 
 if (!process.env.SERVER_PORT) {
   // tslint:disable-next-line:no-console
-  console.log(`Server port was not specified. Try to run app on port 8000...`);
+  log(`Server port was not specified. Try to run app on port 8000...`);
 }
 
 const app = express();
 const port = Number(process.env.SERVER_PORT) || 80 as number;
 
+// Some static routes
 app.use('/static', express.static(path.join(process.cwd(), 'build/static')));
 app.use('/styles', express.static(path.join(process.cwd(), 'build/styles')));
 app.use('/assets', express.static(path.join(process.cwd(), 'build/assets')));
-app.use((req: express.Request, res: express.Response, next: express.NextFunction) => {
+app.use('/favicon.ico', express.static(path.join(process.cwd(), 'favicon.ico')));
+app.use('/service-worker.js', express.static(path.join(process.cwd(), 'service-worker.js')));
+app.use('/index.html', express.static(path.join(process.cwd(), 'index.html')));
+
+const staticRegexs = [
+  /^\/?static\/?.*$/i,
+  /^\/?styles\/?.*$/i,
+  /^\/?assets\/?.*$/i,
+  /^\/?favicon\.ico$/i,
+  /^\/?service-worker\.js$/i,
+  /^\/?index\.html$/i,
+];
+
+// Dynamic route
+app.use(async (req: express.Request, res: express.Response, next: express.NextFunction) => {
+  // Skip all static urls like /static /styles /assets favicon.ico
+  const url = req.url;
+
+  let isStaticRoute = false;
+  staticRegexs.find((reg) => {
+    if (reg.test(url)) {
+      isStaticRoute = true;
+      return true;
+    }
+
+    return false;
+  });
+
+  if (isStaticRoute) {
+    log(`${Colors.yellow(`Static route:`)} ${url}`);
+    res.end();
+    return;
+  }
+
   let serverUrl = process.env.SERVER_URL as string;
   if (!serverUrl || serverUrl === undefined || serverUrl === null) {
     serverUrl = '';
@@ -43,7 +104,20 @@ app.use((req: express.Request, res: express.Response, next: express.NextFunction
     serverUrl += `:${port}`;
   }
 
-  const renderApp = (props: RouteComponentProps) => (<Application server={serverUrl} {...props} />);
+  log(`${Colors.bright(Colors.blue(`\nRequest:`))} ${req.url}`);
+  time(req.url);
+
+  // Prepare cachce in client.
+  await client.clearStore();
+
+  const frontend = await fetchFrontend(req.url);
+  if (!frontend) {
+    log(Colors.red(`Page was not found!`));
+    res.status(404);
+    res.end();
+    return;
+  }
+  const renderApp = (props: RouteComponentProps) => (<Application server={serverUrl} {...props} frontend={frontend} />);
 
   const SSR = (
     <ApolloProvider client={client}>
@@ -71,17 +145,18 @@ app.use((req: express.Request, res: express.Response, next: express.NextFunction
 
     res.send(`<!doctype html>\n${staticHtml}`);
     res.end();
+    timeEnd(req.url);
   })
   .catch(err => {
     res.status(500);
     res.end(`Some error occurres ! Message: ${err.message}`);
-    // tslint:disable-next-line:no-console
-    // console.log(err);
-    console.log(err.networkError.result);
+    timeEnd(req.url);
+    log(Colors.bright(Colors.red(err.message)));
+    log(err);
   });
 });
 
 app.listen(port, () => {
   // tslint:disable-next-line:no-console
-  console.log(`Frontend server is running on port ${port}...`);
+  log(Colors.bright(Colors.green(`Frontend server is running on port ${port}...`)));
 });
