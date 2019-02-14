@@ -197,7 +197,7 @@ module.exports = {
           // tags. If you use code splitting, however, any async bundles will still
           // use the "style" loader inside the async code so CSS from them won't be
           // in the main CSS file.
-      
+
           {
             test: /\.scss$/,
             loader: ExtractTextPlugin.extract(
@@ -338,7 +338,7 @@ module.exports = {
     new ExtractTextPlugin({
       filename: cssFilename,
     }),
-     new FaviconsWebpackPlugin('public/assets/favicon.png'),    // Generate a manifest file which contains a mapping of all asset filenames
+     // new FaviconsWebpackPlugin('public/assets/favicon.png'),    // Generate a manifest file which contains a mapping of all asset filenames
     // to their corresponding output file so that tools can pick it up without
     // having to parse `index.html`.
     new ManifestPlugin({

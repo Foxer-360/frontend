@@ -10,8 +10,9 @@ import { RouteComponentProps, StaticRouter } from 'react-router';
 import { Route } from 'react-router-dom';
 import Application from '../src/components/Application';
 import Html from './components/Html';
-import { client } from './graphql';
+import { client, fetchFrontend } from './graphql';
 import { clearTerminal } from './utils';
+import gql from 'graphql-tag';
 
 // Clear terminal
 clearTerminal();
@@ -27,10 +28,44 @@ if (!process.env.SERVER_PORT) {
 const app = express();
 const port = Number(process.env.SERVER_PORT) || 80 as number;
 
+// Some static routes
 app.use('/static', express.static(path.join(process.cwd(), 'build/static')));
 app.use('/styles', express.static(path.join(process.cwd(), 'build/styles')));
 app.use('/assets', express.static(path.join(process.cwd(), 'build/assets')));
-app.use((req: express.Request, res: express.Response, next: express.NextFunction) => {
+app.use('/favicon.ico', express.static(path.join(process.cwd(), 'favicon.ico')));
+app.use('/service-worker.js', express.static(path.join(process.cwd(), 'service-worker.js')));
+app.use('/index.html', express.static(path.join(process.cwd(), 'index.html')));
+
+const staticRegexs = [
+  /^\/?static\/?.*$/i,
+  /^\/?styles\/?.*$/i,
+  /^\/?assets\/?.*$/i,
+  /^\/?favicon\.ico$/i,
+  /^\/?service-worker\.js$/i,
+  /^\/?index\.html$/i,
+];
+
+// Dynamic route
+app.use(async (req: express.Request, res: express.Response, next: express.NextFunction) => {
+  // Skip all static urls like /static /styles /assets favicon.ico
+  const url = req.url;
+
+  let isStaticRoute = false;
+  staticRegexs.find((reg) => {
+    if (reg.test(url)) {
+      isStaticRoute = true;
+      return true;
+    }
+
+    return false;
+  });
+
+  if (isStaticRoute) {
+    console.log(`Static route: ${url}`);
+    res.end();
+    return;
+  }
+
   let serverUrl = process.env.SERVER_URL as string;
   if (!serverUrl || serverUrl === undefined || serverUrl === null) {
     serverUrl = '';
@@ -43,7 +78,21 @@ app.use((req: express.Request, res: express.Response, next: express.NextFunction
     serverUrl += `:${port}`;
   }
 
-  const renderApp = (props: RouteComponentProps) => (<Application server={serverUrl} {...props} />);
+  process.env.IS_ON_SERVER = 'true';
+
+  console.log(`Request: ${req.url}`);
+
+  // Prepare cachce in client.
+  await client.clearStore();
+
+  const frontend = await fetchFrontend(req.url);
+  if (!frontend) {
+    console.log(`Page was not found!`);
+    res.status(404);
+    res.end();
+    return;
+  }
+  const renderApp = (props: RouteComponentProps) => (<Application server={serverUrl} {...props} frontend={frontend} />);
 
   const SSR = (
     <ApolloProvider client={client}>

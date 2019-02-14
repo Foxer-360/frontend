@@ -14,13 +14,31 @@ export interface IProperties {
   componentModule: IComponentModule;
 }
 
-class Container extends React.Component<IProperties, {}> {
+export interface IState {
+  error: boolean;
+}
+
+class Container extends React.Component<IProperties, IState> {
+
+  static getDerivedStateFromError() {
+    return {
+      error: true
+    };
+  }
 
   constructor(props: IProperties) {
     super(props);
+
+    this.state = {
+      error: false
+    };
   }
 
   public render() {
+    if (this.state.error) {
+      return (<div>Error while rendering component</div>);
+    }
+
     if (!this.props.content || this.props.content.length < 1) {
       return null;
     }
@@ -38,17 +56,21 @@ class Container extends React.Component<IProperties, {}> {
               />
             );
           } else {
+            // This is hack for SSR. Header fail to render
+            if (process.env.IS_ON_SERVER && node.name === 'Header') {
+              return (<div key={node.id} />);
+            }
             const Comp = this.props.componentModule.getComponent(node.name);
 
             if (error) { return 'Error...'; }
             if (loading) { return 'Loading...'; }
-            
+
             const { datasourceItems } = data;
 
             const parsedData = addContextInformationsFromDatasourceItems(datasourceItems, node.data);
 
-            console.log(parsedData);
-      
+            {/*console.log(parsedData);*/}
+
             return (
               <Comp
                 data={parsedData}

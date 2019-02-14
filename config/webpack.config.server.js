@@ -32,9 +32,14 @@ module.exports = {
       '.jsx'
     ],
     alias: {
+      '@source/services/graphql': path.resolve(__dirname, '../server/graphql/index.ts'),
       '@source': path.resolve(appPath, 'src'),
       'components': deps.componentsPath,
-      'plugins': deps.pluginsPath
+      'plugins': deps.pluginsPath,
+      // This is because of badly written webfont loader libs. On SSR, we have
+      // no window and even if we setup mock window, this lib doesn't works.
+      'webfontloader': path.resolve(__dirname, 'webfontloader-mock.js'),
+      '../graphql': path.resolve(__dirname, '../server/graphql/index.ts'),
     }
   },
   module: {
