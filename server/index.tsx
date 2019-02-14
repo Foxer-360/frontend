@@ -11,8 +11,17 @@ import { Route } from 'react-router-dom';
 import Application from '../src/components/Application';
 import Html from './components/Html';
 import { client, fetchFrontend } from './graphql';
-import { clearTerminal } from './utils';
+import { clearTerminal, Colors, logger } from './utils';
 import gql from 'graphql-tag';
+
+// Define log function
+const log = (...args) => {
+  logger.enable();
+  console.log(...args);
+  logger.disable();
+};
+
+logger.disable();
 
 // Clear terminal
 clearTerminal();
@@ -22,7 +31,7 @@ config();
 
 if (!process.env.SERVER_PORT) {
   // tslint:disable-next-line:no-console
-  console.log(`Server port was not specified. Try to run app on port 8000...`);
+  log(`Server port was not specified. Try to run app on port 8000...`);
 }
 
 const app = express();
@@ -61,7 +70,7 @@ app.use(async (req: express.Request, res: express.Response, next: express.NextFu
   });
 
   if (isStaticRoute) {
-    console.log(`Static route: ${url}`);
+    log(`${Colors.yellow(`Static route:`)} ${url}`);
     res.end();
     return;
   }
@@ -80,14 +89,14 @@ app.use(async (req: express.Request, res: express.Response, next: express.NextFu
 
   process.env.IS_ON_SERVER = 'true';
 
-  console.log(`Request: ${req.url}`);
+  log(`${Colors.bright(Colors.blue(`Request:`))} ${req.url}`);
 
   // Prepare cachce in client.
   await client.clearStore();
 
   const frontend = await fetchFrontend(req.url);
   if (!frontend) {
-    console.log(`Page was not found!`);
+    log(Colors.red(`Page was not found!`));
     res.status(404);
     res.end();
     return;
@@ -123,14 +132,14 @@ app.use(async (req: express.Request, res: express.Response, next: express.NextFu
   })
   .catch(err => {
     res.status(500);
-    res.end(`Some error occurres ! Message: ${err.message}`);
+    res.end(Colors.bright(Colors.red(`Some error occurres ! Message: ${err.message}`)));
     // tslint:disable-next-line:no-console
     // console.log(err);
-    console.log(err.networkError.result);
+    log(err.networkError.result);
   });
 });
 
 app.listen(port, () => {
   // tslint:disable-next-line:no-console
-  console.log(`Frontend server is running on port ${port}...`);
+  log(Colors.bright(Colors.green(`Frontend server is running on port ${port}...\n`)));
 });

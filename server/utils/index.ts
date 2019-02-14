@@ -1,4 +1,6 @@
 'use strict';
+import { Colors } from './colors';
+import { logger } from './logger';
 
 /**
  * The simple function that clear whole terminal. It's useful when you run the
@@ -16,4 +18,6 @@ const clearTerminal = () => {
 
 export {
   clearTerminal,
+  Colors,
+  logger,
 };
