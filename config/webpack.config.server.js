@@ -115,7 +115,6 @@ module.exports = {
     new webpack.ProvidePlugin({
       fetch: 'node-fetch',
       window: ['global', 'window'],
-      document: ['global', 'document']
     })
   ],
   node: {

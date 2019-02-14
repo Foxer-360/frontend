@@ -56,10 +56,6 @@ class Container extends React.Component<IProperties, IState> {
               />
             );
           } else {
-            // This is hack for SSR. Header fail to render
-            if (process.env.IS_ON_SERVER && node.name === 'Header') {
-              return (<div key={node.id} />);
-            }
             const Comp = this.props.componentModule.getComponent(node.name);
 
             if (error) { return 'Error...'; }

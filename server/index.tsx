@@ -13,11 +13,28 @@ import Html from './components/Html';
 import { client, fetchFrontend } from './graphql';
 import { clearTerminal, Colors, logger } from './utils';
 import gql from 'graphql-tag';
+import './utils/document';
 
 // Define log function
 const log = (...args) => {
   logger.enable();
   console.log(...args);
+  logger.disable();
+};
+
+// Define Timer
+const getTimerText = (url: string) => {
+  return `Response for ${url} in ${Colors.Foregrounds.Green}${Colors.System.Bright}`;
+};
+
+const time = (url: string) => {
+  console.time(getTimerText(url));
+};
+
+const timeEnd = (url: string) => {
+  logger.enable();
+  console.timeEnd(getTimerText(url));
+  console.log(Colors.System.Reset);
   logger.disable();
 };
 
@@ -87,9 +104,8 @@ app.use(async (req: express.Request, res: express.Response, next: express.NextFu
     serverUrl += `:${port}`;
   }
 
-  process.env.IS_ON_SERVER = 'true';
-
-  log(`${Colors.bright(Colors.blue(`Request:`))} ${req.url}`);
+  log(`${Colors.bright(Colors.blue(`\nRequest:`))} ${req.url}`);
+  time(req.url);
 
   // Prepare cachce in client.
   await client.clearStore();
@@ -129,17 +145,18 @@ app.use(async (req: express.Request, res: express.Response, next: express.NextFu
 
     res.send(`<!doctype html>\n${staticHtml}`);
     res.end();
+    timeEnd(req.url);
   })
   .catch(err => {
     res.status(500);
-    res.end(Colors.bright(Colors.red(`Some error occurres ! Message: ${err.message}`)));
-    // tslint:disable-next-line:no-console
-    // console.log(err);
-    log(err.networkError.result);
+    res.end(`Some error occurres ! Message: ${err.message}`);
+    timeEnd(req.url);
+    log(Colors.bright(Colors.red(err.message)));
+    log(err);
   });
 });
 
 app.listen(port, () => {
   // tslint:disable-next-line:no-console
-  log(Colors.bright(Colors.green(`Frontend server is running on port ${port}...\n`)));
+  log(Colors.bright(Colors.green(`Frontend server is running on port ${port}...`)));
 });
