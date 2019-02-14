@@ -15,8 +15,6 @@ const getClientEnvironment = require('./env');
 const TsconfigPathsPlugin = require('tsconfig-paths-webpack-plugin');
 const UglifyJsPlugin = require('uglifyjs-webpack-plugin');
 const deps = require('./deps');
-const FaviconsWebpackPlugin = require('favicons-webpack-plugin');
-
 
 // Webpack uses `publicPath` to determine where the app is being served from.
 // It requires a trailing slash, or the file assets will get an incorrect path.
@@ -338,7 +336,6 @@ module.exports = {
     new ExtractTextPlugin({
       filename: cssFilename,
     }),
-     // new FaviconsWebpackPlugin('public/assets/favicon.png'),    // Generate a manifest file which contains a mapping of all asset filenames
     // to their corresponding output file so that tools can pick it up without
     // having to parse `index.html`.
     new ManifestPlugin({

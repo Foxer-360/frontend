@@ -20,7 +20,6 @@ const Html = ({ content, client: { cache }, manifest, helmet }: IProperties) => 
       {helmet.meta.toComponent()}
 
       <link href={`/${manifest['static/media/simplemde.min.css']}`} rel="stylesheet" type="text/css"/>
-      <link href="/styles/kohinoor.css" rel="stylesheet" type="text/css" />
       {helmet.link.toComponent()}
 
       {helmet.title.toComponent()}
