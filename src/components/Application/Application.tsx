@@ -221,7 +221,8 @@ class Application extends React.Component<IProperties, IState> {
       website: websiteData,
       navigations: navigationsData,
       datasourceItems,
-      project
+      project,
+      project: projectData,
     } = frontend;
     const query = gql`
       query {
@@ -231,7 +232,8 @@ class Application extends React.Component<IProperties, IState> {
         websiteData,
         navigationsData,
         datasourceItems,
-        project
+        project,
+        projectData
       }
     `;
     await client.writeQuery({
@@ -243,7 +245,8 @@ class Application extends React.Component<IProperties, IState> {
         websiteData,
         navigationsData,
         datasourceItems,
-        project
+        project,
+        projectData
       },
     });
   }
