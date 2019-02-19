@@ -65,8 +65,6 @@ class Container extends React.Component<IProperties, IState> {
 
             const parsedData = addContextInformationsFromDatasourceItems(datasourceItems, node.data);
 
-            {/*console.log(parsedData);*/}
-
             return (
               <Comp
                 data={parsedData}

@@ -214,6 +214,7 @@ class Application extends React.Component<IProperties, IState> {
   private setContext = async (frontend) => {
 
     if (!frontend) { return; }
+
     const {
       language: languageData,
       languages,
