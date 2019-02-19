@@ -17,6 +17,7 @@ const GET_CONTEXT = gql`
   languagesData @client
   navigationsData @client
   datasourceItems @client
+  project @client
 }
 `;
 
@@ -36,6 +37,8 @@ export interface IProperties {
   server?: string;
   // tslint:disable-next-line:no-any
   location?: any;
+  // This is because of SSR
+  frontend?: LooseObject;
 }
 
 export interface ISeoPluginData {
@@ -65,8 +68,12 @@ class Application extends React.Component<IProperties, IState> {
 
   constructor(props: IProperties) {
     super(props);
+    let frontend = null;
+    if (props.frontend) {
+      frontend = { ...props.frontend };
+    }
     this.state = {
-      frontend: null
+      frontend,
     };
   }
 
@@ -131,6 +138,17 @@ class Application extends React.Component<IProperties, IState> {
 
           const seo = this.formatSeoData(this.state.frontend.seo as ISeoPluginData);
 
+          let favicon = `${process.env.REACT_APP_SERVER_URL}/favicon.ico`;
+
+          if (this.state.frontend && this.state.frontend.project && this.state.frontend.project.components) {
+            const components = this.state.frontend.project.components.split(',') as string[] | [] as string[];
+            if (components.length > 0) {
+              favicon = `${process.env.REACT_APP_SERVER_URL}/assets/${components[0]}/favicon.png`;
+            }
+          }
+
+          const styles = ComponentsModule.getStyles();
+
           return (
             <>
               <Helmet>
@@ -138,6 +156,12 @@ class Application extends React.Component<IProperties, IState> {
                 <meta name="keywords" content={seo.keywords} />
                 <meta name="theme-color" content={seo.themeColor} />
                 <title>{seo.title || this.state.frontend.page.name}</title>
+
+                {/* Styles and favicon selected per project */}
+                {styles.map((style: string) => (
+                  <link rel="stylesheet" key={style} href={`${process.env.REACT_APP_SERVER_URL}${style}`} />
+                ))}
+                <link rel="shortcut icon" type="image/png" href={favicon} />
 
                 {/* Facebook */}
                 <meta property="og:url" content={fullUrl} />
@@ -190,13 +214,16 @@ class Application extends React.Component<IProperties, IState> {
   private setContext = async (frontend) => {
 
     if (!frontend) { return; }
-    const { 
+
+    const {
       language: languageData,
       languages,
       page: pageData,
       website: websiteData,
       navigations: navigationsData,
       datasourceItems,
+      project,
+      project: projectData,
     } = frontend;
     const query = gql`
       query {
@@ -206,6 +233,8 @@ class Application extends React.Component<IProperties, IState> {
         websiteData,
         navigationsData,
         datasourceItems,
+        project,
+        projectData
       }
     `;
     await client.writeQuery({
@@ -216,7 +245,9 @@ class Application extends React.Component<IProperties, IState> {
         pageData,
         websiteData,
         navigationsData,
-        datasourceItems
+        datasourceItems,
+        project,
+        projectData
       },
     });
   }
