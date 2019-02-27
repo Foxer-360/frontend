@@ -44,7 +44,7 @@ const client = new ApolloClient({
   connectToDevTools: true,
   link: ApolloLink.from([
     stateLink,
-    httpLink
+    httpLink,
   ]),
   ssrForceFetchDelay: 100,
 });

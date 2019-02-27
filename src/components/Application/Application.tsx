@@ -77,11 +77,6 @@ class Application extends React.Component<IProperties, IState> {
     };
   }
 
-  public componentDidMount() {
-    const { location: { pathname } } = this.props;
-    this.fetchFrontend(pathname);
-  }
-
   public componentWillReceiveProps({ location: { pathname: newPath } }: LooseObject) {
     const { location: { pathname: oldPath } } = this.props;
 
@@ -90,18 +85,7 @@ class Application extends React.Component<IProperties, IState> {
         behavior: 'smooth',
         top: 0,
       });
-      this.fetchFrontend(newPath);
     }
-  }
-
-  fetchFrontend = (path) => {
-    client.query({
-      query: queries.FRONTEND,
-      variables: { url: path }
-    }).then(async ({ data: { frontend } }: LooseObject) => {
-      await this.setContext(frontend);
-      this.setState({ frontend });
-    });
   }
 
   public render() {
@@ -117,17 +101,24 @@ class Application extends React.Component<IProperties, IState> {
         variables={{ url: path }}
       >
         {({
-          getPagesUrls: {
-            loading: getPagesUrlsLoading,
-            error: getPagesUrlsError
+          frontend: {
+            frontend: queryFrontend
+          },
+          getContext: {
+            project
           }
-          }: LooseObject) => {
+        }: LooseObject) => {
 
-          if (!this.state.frontend) {
+          if (
+            !(queryFrontend || this.state.frontend) ||
+            !project
+          ) {
             return <span>Page not found...</span>;
           }
+          
+          const frontend = queryFrontend || this.state.frontend;
 
-          if (!this.state.frontend.page.content) {
+          if (!frontend.page.content) {
             return <span>Content of page was not found...</span>;
           }
 
@@ -136,12 +127,12 @@ class Application extends React.Component<IProperties, IState> {
             fullUrl = `${this.props.server}${path}`;
           }
 
-          const seo = this.formatSeoData(this.state.frontend.seo as ISeoPluginData);
+          const seo = this.formatSeoData(frontend.seo as ISeoPluginData);
 
           let favicon = `${process.env.REACT_APP_SERVER_URL}/favicon.ico`;
 
-          if (this.state.frontend && this.state.frontend.project && this.state.frontend.project.components) {
-            const components = this.state.frontend.project.components.split(',') as string[] | [] as string[];
+          if (frontend && frontend.project && frontend.project.components) {
+            const components = frontend.project.components.split(',') as string[] | [] as string[];
             if (components.length > 0) {
               favicon = `${process.env.REACT_APP_SERVER_URL}/assets/${components[0]}/favicon.png`;
             }
@@ -155,7 +146,7 @@ class Application extends React.Component<IProperties, IState> {
                 <meta name="description" content={seo.description} />
                 <meta name="keywords" content={seo.keywords} />
                 <meta name="theme-color" content={seo.themeColor} />
-                <title>{seo.title || this.state.frontend.page.name}</title>
+                <title>{seo.title || frontend.page.name}</title>
 
                 {/* Styles and favicon selected per project */}
                 {styles.map((style: string) => (
@@ -178,7 +169,7 @@ class Application extends React.Component<IProperties, IState> {
               </Helmet>
 
               <LightweightComposer
-                content={this.state.frontend.page.content}
+                content={frontend.page.content}
                 componentModule={ComponentsModule}
                 pluginModule={PluginsModule}
                 plugins={['navigations', 'languages']}
@@ -197,24 +188,22 @@ class Application extends React.Component<IProperties, IState> {
         {({ data }) => render(data)}
       </Query>
     ),
-    getPagesUrls: ({ render, getContext: { language }, getContext }) => {
-
-      if (!language) { return render({}); }
-
+    frontend: ({ render, variables: { url }, getContext }) => { 
       return(
-        <Query query={GET_PAGES_URLS} variables={{ languageCode: language.code }}>
-          {(data) => {
-            return render(data);
-          }}
-        </Query>
-      );
+        <Query 
+          query={queries.FRONTEND} 
+          variables={{ url }}
+          onCompleted={({ frontend }) => this.setContext(frontend, getContext)}
+        >
+          {({ data }) => render(data)}
+        </Query>);
     }
   })
 
-  private setContext = async (frontend) => {
+  private setContext = async (frontend, oldContext) => {
 
     if (!frontend) { return; }
-
+    this.setState({ frontend });
     const {
       language: languageData,
       languages,
@@ -225,31 +214,103 @@ class Application extends React.Component<IProperties, IState> {
       project,
       project: projectData,
     } = frontend;
-    const query = gql`
-      query {
-        languageData,
-        languagesData,
-        pageData,
-        websiteData,
-        navigationsData,
-        datasourceItems,
-        project,
-        projectData
-      }
-    `;
-    await client.writeQuery({
-      query,
-      data: {
-        languageData,
-        languagesData: languages,
-        pageData,
-        websiteData,
-        navigationsData,
-        datasourceItems,
-        project,
-        projectData
-      },
-    });
+
+    if (!oldContext || JSON.stringify(oldContext) === '{}') {
+      await client.writeQuery({
+        query: gql`
+          query {
+            languageData,
+            languagesData,
+            pageData,
+            websiteData,
+            navigationsData,
+            datasourceItems,
+            project,
+            projectData
+          }
+        `,
+        data: {
+          languageData,
+          languagesData: languages,
+          pageData,
+          websiteData,
+          navigationsData,
+          datasourceItems,
+          project,
+          projectData
+        },
+      });
+      return;
+    } else {
+      await client.writeQuery({
+        query: gql`
+        query {
+          pageData,
+          datasourceItems,
+        }`
+      ,
+        data: {
+          pageData,
+          datasourceItems,
+        },
+      });
+    }
+
+    if (
+      oldContext &&
+      oldContext.websiteData &&
+      (oldContext.websiteData.id !== websiteData.id)
+    ) {
+      await client.writeQuery({
+        query: gql`
+          query {
+            websiteData
+            languagesData
+            navigationsData
+            project
+            projectData
+          }
+        `,
+        data: {
+          websiteData,
+          languagesData: languages,
+          navigationsData,
+          project,
+          projectData
+        },
+      });
+    }
+
+    if (
+      oldContext &&
+      oldContext.languageData &&
+      (oldContext.languageData.id !== languageData.id)
+    ) {
+      await client.writeQuery({
+        query: gql`
+          query {
+            languageData
+          }
+        `,
+        data: {
+          languageData
+        },
+      });
+    }
+
+    if (oldContext && oldContext.websiteData) {
+      await client.writeQuery({
+        query: gql`
+          query {
+            websiteData
+          }
+        `,
+        data: {
+          websiteData
+        },
+      });
+      return;
+    }
   }
 
   private formatSeoData(seo: ISeoPluginData): ISeoPluginData {
