@@ -2,7 +2,7 @@ import gql from 'graphql-tag';
 
 const FRONTEND = gql`
   query frontend($url: String!) {
-    frontend( where: { url: $url } ) {
+    frontend: frontend( where: { url: $url } ) {
       website @connection(key: "websiteData") {
         id
         title

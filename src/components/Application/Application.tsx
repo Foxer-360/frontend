@@ -39,6 +39,7 @@ export interface IProperties {
   location?: any;
   // This is because of SSR
   frontend?: LooseObject;
+  content?: LooseObject;
 }
 
 export interface ISeoPluginData {
@@ -61,7 +62,8 @@ export interface ISeoPluginData {
 }
 
 export interface IState {
-  frontend?: LooseObject;
+  content?: LooseObject;
+  project?: LooseObject;
 }
 
 class Application extends React.Component<IProperties, IState> {
@@ -73,8 +75,29 @@ class Application extends React.Component<IProperties, IState> {
       frontend = { ...props.frontend };
     }
     this.state = {
-      frontend,
+      content: frontend && frontend.content,
     };
+  }
+
+  componentDidMount() {
+    const { location: { pathname } } = this.props;
+
+    this.fetchFrontend(pathname);
+  }
+
+  fetchFrontend = (path) => {
+    client.query({
+      query: GET_CONTEXT
+    }).then(({ data }) => {
+      client.query({
+        query: queries.FRONTEND,
+        variables: { url: path }
+      }).then(async ({ data: { frontend } }: LooseObject) => {
+  
+        await this.setContext(frontend, data);
+      });
+    });
+
   }
 
   public componentWillReceiveProps({ location: { pathname: newPath } }: LooseObject) {
@@ -85,6 +108,7 @@ class Application extends React.Component<IProperties, IState> {
         behavior: 'smooth',
         top: 0,
       });
+      this.fetchFrontend(newPath);
     }
   }
 
@@ -94,91 +118,74 @@ class Application extends React.Component<IProperties, IState> {
     if (!path) {
       return null;
     }
-    const ComposedQuery = this.getComposedQuery();
+    console.log(this.state.content);
+    if (
+      !(this.state.content) ||
+      !this.state.project
+    ) {
+      return <span>Page not found...</span>;
+    }
+    
+    const content = this.state.content;
+
+    if (!content) {
+      return <span>Content of page was not found...</span>;
+    }
+
+    let fullUrl = path;
+    if (this.props.server && this.props.server.length > 1) {
+      fullUrl = `${this.props.server}${path}`;
+    }
+
+    // const seo = this.formatSeoData(frontend.seo as ISeoPluginData);
+
+    let favicon = `${process.env.REACT_APP_SERVER_URL}/favicon.ico`;
+
+    if (this.state.project && this.state.project.components) {
+      const components = this.state.project.components.split(',') as string[] | [] as string[];
+      if (components.length > 0) {
+        favicon = `${process.env.REACT_APP_SERVER_URL}/assets/${components[0]}/favicon.png`;
+      }
+    }
+
+    const styles = ComponentsModule.getStyles();
 
     return (
-      <ComposedQuery
-        variables={{ url: path }}
-      >
-        {({
-          frontend: {
-            frontend: queryFrontend
-          },
-          getContext: {
-            project
-          }
-        }: LooseObject) => {
+      <>
+        {/* <Helmet>
+          <meta name="description" content={seo.description} />
+          <meta name="keywords" content={seo.keywords} />
+          <meta name="theme-color" content={seo.themeColor} />
+          <title>{seo.title || frontend.page.name}</title> */}
 
-          if (
-            !(queryFrontend || this.state.frontend) ||
-            !project
-          ) {
-            return <span>Page not found...</span>;
-          }
-          
-          const frontend = queryFrontend || this.state.frontend;
+          {/* Styles and favicon selected per project */}
+          {/* {styles.map((style: string) => (
+            <link rel="stylesheet" key={style} href={`${process.env.REACT_APP_SERVER_URL}${style}`} />
+          ))}
+          <link rel="shortcut icon" type="image/png" href={favicon} /> */}
 
-          if (!frontend.page.content) {
-            return <span>Content of page was not found...</span>;
-          }
+          {/* Facebook */}
+          {/* <meta property="og:url" content={fullUrl} />
+          <meta property="og:type" content="website" />
+          <meta property="og:title" content={seo.facebook.title} />
+          <meta property="og:description" content={seo.facebook.description} />
+          <meta property="og:image" content={seo.facebook.image || seo.defaultImage} /> */}
 
-          let fullUrl = path;
-          if (this.props.server && this.props.server.length > 1) {
-            fullUrl = `${this.props.server}${path}`;
-          }
+          {/* Twitter */}
+          {/* <meta name="twitter:card" content="summary_large_image" />
+          <meta name="twitter:title" content={seo.twitter.title} />
+          <meta name="twitter:description" content={seo.twitter.description} />
+          <meta name="twitter:image" content={seo.twitter.image || seo.defaultImage} />
+        </Helmet> */}
 
-          const seo = this.formatSeoData(frontend.seo as ISeoPluginData);
-
-          let favicon = `${process.env.REACT_APP_SERVER_URL}/favicon.ico`;
-
-          if (frontend && frontend.project && frontend.project.components) {
-            const components = frontend.project.components.split(',') as string[] | [] as string[];
-            if (components.length > 0) {
-              favicon = `${process.env.REACT_APP_SERVER_URL}/assets/${components[0]}/favicon.png`;
-            }
-          }
-
-          const styles = ComponentsModule.getStyles();
-
-          return (
-            <>
-              <Helmet>
-                <meta name="description" content={seo.description} />
-                <meta name="keywords" content={seo.keywords} />
-                <meta name="theme-color" content={seo.themeColor} />
-                <title>{seo.title || frontend.page.name}</title>
-
-                {/* Styles and favicon selected per project */}
-                {styles.map((style: string) => (
-                  <link rel="stylesheet" key={style} href={`${process.env.REACT_APP_SERVER_URL}${style}`} />
-                ))}
-                <link rel="shortcut icon" type="image/png" href={favicon} />
-
-                {/* Facebook */}
-                <meta property="og:url" content={fullUrl} />
-                <meta property="og:type" content="website" />
-                <meta property="og:title" content={seo.facebook.title} />
-                <meta property="og:description" content={seo.facebook.description} />
-                <meta property="og:image" content={seo.facebook.image || seo.defaultImage} />
-
-                {/* Twitter */}
-                <meta name="twitter:card" content="summary_large_image" />
-                <meta name="twitter:title" content={seo.twitter.title} />
-                <meta name="twitter:description" content={seo.twitter.description} />
-                <meta name="twitter:image" content={seo.twitter.image || seo.defaultImage} />
-              </Helmet>
-
-              <LightweightComposer
-                content={frontend.page.content}
-                componentModule={ComponentsModule}
-                pluginModule={PluginsModule}
-                plugins={['navigations', 'languages']}
-                client={client}
-              />
-            </>
-          );
-        }}
-      </ComposedQuery>
+        <LightweightComposer
+          content={content}
+          componentModule={ComponentsModule}
+          pluginModule={PluginsModule}
+          plugins={['navigations', 'languages']}
+          client={client}
+        />
+      </>
     );
   }
 
@@ -203,7 +210,6 @@ class Application extends React.Component<IProperties, IState> {
   private setContext = async (frontend, oldContext) => {
 
     if (!frontend) { return; }
-    this.setState({ frontend });
     const {
       language: languageData,
       languages,
@@ -240,6 +246,8 @@ class Application extends React.Component<IProperties, IState> {
           projectData
         },
       });
+      await this.setState({ content: frontend.content });
+      await this.setState({ project });
       return;
     } else {
       await client.writeQuery({
@@ -309,8 +317,10 @@ class Application extends React.Component<IProperties, IState> {
           websiteData
         },
       });
-      return;
     }
+
+    await this.setState({ content: frontend.content });
+    await this.setState({ project });
   }
 
   private formatSeoData(seo: ISeoPluginData): ISeoPluginData {
