@@ -67,7 +67,7 @@ module.exports = {
           path.resolve(appPath, 'node_modules'),
           deps.componentsPath,
           deps.pluginsPath,
-          path.resolve(appPath, '../med')
+          path.resolve(appPath, '../components')
         ]
       },
       {
