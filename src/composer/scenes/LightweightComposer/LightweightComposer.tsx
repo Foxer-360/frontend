@@ -25,6 +25,10 @@ class LightweightComposer extends React.Component<IProperties, {}> {
 
   }
 
+  componentDidMount() {
+    console.log({ LightweightComposer: 'mounted'});
+  }
+
   public render(): JSX.Element {
     return (
       <Container
