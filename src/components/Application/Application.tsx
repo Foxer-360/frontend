@@ -7,7 +7,7 @@ import * as React from 'react';
 import { Query } from 'react-apollo';
 import { Helmet } from 'react-helmet';
 import gql from 'graphql-tag';
-import { adopt } from 'react-adopt';
+import { addContextInformationsFromDatasourceItems } from '@source/composer/utils';
 
 const GET_CONTEXT = gql`
 {
@@ -21,9 +21,45 @@ const GET_CONTEXT = gql`
 }
 `;
 
+const GET_ALL_PAGES = gql`
+  query localizedPages($languageId: ID! $projectId: ID!) {
+    pages(where: { website: { project: { id: $projectId } } }) {
+      id
+      type {
+        id
+        name
+      }
+      tags {
+        id
+        name
+      }
+      plugin {
+        plugin
+        content
+      }
+      translations(where: { 
+        language: { id: $languageId }
+      }) {
+        id
+        name
+        createdAt
+        content
+        annotations {
+          key
+          value
+        }
+        language {
+          id
+          code
+        }
+      }
+    }
+  }
+`;
+
 const GET_PAGES_URLS = gql`
-  query pagesUrls($languageCode: String) {
-    pagesUrls(where: { languageCode: $languageCode }) {
+  query pagesUrls($language: ID!, $websiteId: Id!) {
+    pagesUrls(where: { language: $language, websiteId: $websiteId }) {
       id
       page
       url
@@ -39,6 +75,7 @@ export interface IProperties {
   location?: any;
   // This is because of SSR
   frontend?: LooseObject;
+  content?: LooseObject;
 }
 
 export interface ISeoPluginData {
@@ -61,10 +98,18 @@ export interface ISeoPluginData {
 }
 
 export interface IState {
-  frontend?: LooseObject;
 }
 
 class Application extends React.Component<IProperties, IState> {
+
+  // tslint:disable-next-line:no-any
+  content: any;
+  // tslint:disable-next-line:no-any
+  project: any;
+  // tslint:disable-next-line:no-any
+  pageName: any;
+  // tslint:disable-next-line:no-any 
+  seo: any;
 
   constructor(props: IProperties) {
     super(props);
@@ -72,9 +117,65 @@ class Application extends React.Component<IProperties, IState> {
     if (props.frontend) {
       frontend = { ...props.frontend };
     }
-    this.state = {
-      frontend,
-    };
+
+    this.content = frontend && frontend.page.content;
+    this.project = frontend && frontend.project;
+    this.pageName = frontend && frontend.page.name;
+    this.seo = frontend && frontend.seo;
+  }
+
+  componentDidMount() {
+    const { location: { pathname } } = this.props;
+
+    this.fetchFrontend(pathname);
+  }
+
+  fetchFrontend = async (path) => {
+    const { data }: LooseObject = await client.query({
+      query: GET_CONTEXT
+    });
+    let frontend = null;
+    
+    // In case that context is available, try to look for page in cache.
+    if (data && data.languageData && data.languageData.id && data.project && data.project.id && data.websiteData && data.websiteData.id) {
+      const { data: { pagesUrls } }: LooseObject = await client.query({
+        query: GET_PAGES_URLS,
+        variables: { language: data.languageData.id, websiteId: data.websiteData.id }
+      });
+      if (pagesUrls) {
+        const pUrl = pagesUrls.find(p => p.url === path);
+
+        if (pUrl) {
+          const { data: { pages } }: LooseObject = await client.query({
+            query: GET_ALL_PAGES,
+            variables: { 
+              languageId: data.languageData.id,
+              projectId: data.project.id,
+            }
+          });
+          if (pages) {
+            const localizedPage = pages.find(page => page.id === pUrl.id.split('/')[0]);
+            if (localizedPage) {
+              this.content = localizedPage.translations[0].content;
+              this.seo = localizedPage.plugin && localizedPage.plugin === 'seo' ? localizedPage.plugin.content : null;
+              this.project = data.project;
+              this.pageName = localizedPage.translations[0].name;
+              this.forceUpdate();
+              return;
+            }
+          }
+        }
+      }
+    }
+
+    // In other cases fetch frontend
+    const { data: { frontend: frontendFromQuery } }: LooseObject = await client.query({
+      query: queries.FRONTEND,
+      variables: { url: path }
+    });
+    frontend = frontendFromQuery;
+
+    return this.setContext(frontend, data);
   }
 
   public componentWillReceiveProps({ location: { pathname: newPath } }: LooseObject) {
@@ -85,6 +186,7 @@ class Application extends React.Component<IProperties, IState> {
         behavior: 'smooth',
         top: 0,
       });
+      this.fetchFrontend(newPath);
     }
   }
 
@@ -94,116 +196,89 @@ class Application extends React.Component<IProperties, IState> {
     if (!path) {
       return null;
     }
-    const ComposedQuery = this.getComposedQuery();
+    if (
+      !(this.content) ||
+      !this.project
+    ) {
+      return <span>Page not found...</span>;
+    }
+    
+    const content = this.content;
+
+    if (!content) {
+      return <span>Content of page was not found...</span>;
+    }
+
+    let fullUrl = path;
+    if (this.props.server && this.props.server.length > 1) {
+      fullUrl = `${this.props.server}${path}`;
+    }
+
+    let seo = this.formatSeoData(this.seo as ISeoPluginData);
+
+    let favicon = `${process.env.REACT_APP_SERVER_URL}/favicon.ico`;
+
+    if (this.project && this.project.components) {
+      const components = this.project.components.split(',') as string[] | [] as string[];
+      if (components.length > 0) {
+        favicon = `${process.env.REACT_APP_SERVER_URL}/assets/${components[0]}/favicon.png`;
+      }
+    }
 
     return (
-      <ComposedQuery
-        variables={{ url: path }}
-      >
-        {({
-          frontend: {
-            frontend: queryFrontend
-          },
-          getContext: {
-            project
-          }
-        }: LooseObject) => {
+      <>
+         <Query query={GET_CONTEXT}>
+         {({ error, loading, data }) => {
 
-          if (
-            !(queryFrontend || this.state.frontend) ||
-            !project
-          ) {
-            return <span>Page not found...</span>;
-          }
-          
-          const frontend = queryFrontend || this.state.frontend;
+            if (error) { return 'Error...'; }
+            if (loading) { return 'Loading...'; }
 
-          if (!frontend.page.content) {
-            return <span>Content of page was not found...</span>;
-          }
+            const { datasourceItems } = data;
 
-          let fullUrl = path;
-          if (this.props.server && this.props.server.length > 1) {
-            fullUrl = `${this.props.server}${path}`;
-          }
-
-          const seo = this.formatSeoData(frontend.seo as ISeoPluginData);
-
-          let favicon = `${process.env.REACT_APP_SERVER_URL}/favicon.ico`;
-
-          if (frontend && frontend.project && frontend.project.components) {
-            const components = frontend.project.components.split(',') as string[] | [] as string[];
-            if (components.length > 0) {
-              favicon = `${process.env.REACT_APP_SERVER_URL}/assets/${components[0]}/favicon.png`;
-            }
-          }
-
-          const styles = ComponentsModule.getStyles();
-
-          return (
-            <>
+            seo = addContextInformationsFromDatasourceItems(datasourceItems || [], seo);
+            const styles = ComponentsModule.getStyles();
+            return (
               <Helmet>
-                <meta name="description" content={seo.description} />
-                <meta name="keywords" content={seo.keywords} />
-                <meta name="theme-color" content={seo.themeColor} />
-                <title>{seo.title || frontend.page.name}</title>
+              <meta name="description" content={seo.description} />
+              <meta name="keywords" content={seo.keywords} />
+              <meta name="theme-color" content={seo.themeColor} />
+              <title>{seo.title || this.pageName}</title>
 
-                {/* Styles and favicon selected per project */}
-                {styles.map((style: string) => (
-                  <link rel="stylesheet" key={style} href={`${process.env.REACT_APP_SERVER_URL}${style}`} />
-                ))}
-                <link rel="shortcut icon" type="image/png" href={favicon} />
+              {/* Styles and favicon selected per project */}
+              {styles.map((style: string) => (
+                <link rel="stylesheet" key={style} href={`${process.env.REACT_APP_SERVER_URL}${style}`} />
+              ))}
+              <link rel="shortcut icon" type="image/png" href={favicon} />
 
-                {/* Facebook */}
-                <meta property="og:url" content={fullUrl} />
-                <meta property="og:type" content="website" />
-                <meta property="og:title" content={seo.facebook.title} />
-                <meta property="og:description" content={seo.facebook.description} />
-                <meta property="og:image" content={seo.facebook.image || seo.defaultImage} />
+              {/* Facebook */}
+              <meta property="og:url" content={fullUrl} />
+              <meta property="og:type" content="website" />
+              <meta property="og:title" content={seo.facebook.title} />
+              <meta property="og:description" content={seo.facebook.description} />
+              <meta property="og:image" content={seo.facebook.image || seo.defaultImage} />
 
-                {/* Twitter */}
-                <meta name="twitter:card" content="summary_large_image" />
-                <meta name="twitter:title" content={seo.twitter.title} />
-                <meta name="twitter:description" content={seo.twitter.description} />
-                <meta name="twitter:image" content={seo.twitter.image || seo.defaultImage} />
-              </Helmet>
+              {/* Twitter */}
+              <meta name="twitter:card" content="summary_large_image" />
+              <meta name="twitter:title" content={seo.twitter.title} />
+              <meta name="twitter:description" content={seo.twitter.description} />
+              <meta name="twitter:image" content={seo.twitter.image || seo.defaultImage} />
+            </Helmet>);
+         }}</Query>
 
-              <LightweightComposer
-                content={frontend.page.content}
-                componentModule={ComponentsModule}
-                pluginModule={PluginsModule}
-                plugins={['navigations', 'languages']}
-                client={client}
-              />
-            </>
-          );
-        }}
-      </ComposedQuery>
+        <LightweightComposer
+          content={content}
+          componentModule={ComponentsModule}
+          pluginModule={PluginsModule}
+          plugins={['navigations', 'languages']}
+          client={client}
+        />
+      </>
     );
   }
-
-  private getComposedQuery = () => adopt({
-    getContext: ({ render }) => (
-      <Query query={GET_CONTEXT} >
-        {({ data }) => render(data)}
-      </Query>
-    ),
-    frontend: ({ render, variables: { url }, getContext }) => { 
-      return(
-        <Query 
-          query={queries.FRONTEND} 
-          variables={{ url }}
-          onCompleted={({ frontend }) => this.setContext(frontend, getContext)}
-        >
-          {({ data }) => render(data)}
-        </Query>);
-    }
-  })
 
   private setContext = async (frontend, oldContext) => {
 
     if (!frontend) { return; }
-    this.setState({ frontend });
     const {
       language: languageData,
       languages,
@@ -240,7 +315,6 @@ class Application extends React.Component<IProperties, IState> {
           projectData
         },
       });
-      return;
     } else {
       await client.writeQuery({
         query: gql`
@@ -255,62 +329,11 @@ class Application extends React.Component<IProperties, IState> {
         },
       });
     }
-
-    if (
-      oldContext &&
-      oldContext.websiteData &&
-      (oldContext.websiteData.id !== websiteData.id)
-    ) {
-      await client.writeQuery({
-        query: gql`
-          query {
-            websiteData
-            languagesData
-            navigationsData
-            project
-            projectData
-          }
-        `,
-        data: {
-          websiteData,
-          languagesData: languages,
-          navigationsData,
-          project,
-          projectData
-        },
-      });
-    }
-
-    if (
-      oldContext &&
-      oldContext.languageData &&
-      (oldContext.languageData.id !== languageData.id)
-    ) {
-      await client.writeQuery({
-        query: gql`
-          query {
-            languageData
-          }
-        `,
-        data: {
-          languageData
-        },
-      });
-    }
-
-    if (oldContext && oldContext.websiteData) {
-      await client.writeQuery({
-        query: gql`
-          query {
-            websiteData
-          }
-        `,
-        data: {
-          websiteData
-        },
-      });
-      return;
-    }
+    this.content = frontend.page.content;
+    this.seo = frontend.seo;
+    this.project = project;
+    this.pageName = frontend.page.name;
+    this.forceUpdate();
   }
 
   private formatSeoData(seo: ISeoPluginData): ISeoPluginData {
