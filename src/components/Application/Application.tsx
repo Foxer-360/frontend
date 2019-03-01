@@ -216,8 +216,6 @@ class Application extends React.Component<IProperties, IState> {
 
     let seo = this.formatSeoData(this.seo as ISeoPluginData);
 
-    // const seo = this.formatSeoData(frontend.seo as ISeoPluginData);
-
     let favicon = `${process.env.REACT_APP_SERVER_URL}/favicon.ico`;
 
     if (this.project && this.project.components) {
@@ -229,7 +227,8 @@ class Application extends React.Component<IProperties, IState> {
 
     return (
       <>
-         <Query query={GET_CONTEXT}>{({ error, loading, data }) => {
+         <Query query={GET_CONTEXT}>
+         {({ error, loading, data }) => {
 
             if (error) { return 'Error...'; }
             if (loading) { return 'Loading...'; }
