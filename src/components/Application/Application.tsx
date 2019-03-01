@@ -7,7 +7,7 @@ import * as React from 'react';
 import { Query } from 'react-apollo';
 import { Helmet } from 'react-helmet';
 import gql from 'graphql-tag';
-import { adopt } from 'react-adopt';
+import { addContextInformationsFromDatasourceItems } from '@source/composer/utils';
 
 const GET_CONTEXT = gql`
 {
@@ -58,8 +58,8 @@ const GET_ALL_PAGES = gql`
 `;
 
 const GET_PAGES_URLS = gql`
-  query pagesUrls($language: ID!) {
-    pagesUrls(where: { language: $language }) {
+  query pagesUrls($language: ID!, $websiteId: Id!) {
+    pagesUrls(where: { language: $language, websiteId: $websiteId }) {
       id
       page
       url
@@ -69,18 +69,6 @@ const GET_PAGES_URLS = gql`
   }
 `;
 
-const PAGE_PLUGINS = gql`
-  query {
-    pagePlugins {
-      id
-      language {
-        id
-      }
-      plugin
-      content
-    }
-  }
-`;
 export interface IProperties {
   server?: string;
   // tslint:disable-next-line:no-any
@@ -110,18 +98,12 @@ export interface ISeoPluginData {
 }
 
 export interface IState {
-  content?: LooseObject;
-  project?: LooseObject;
-  seo?: LooseObject;
-  pageName?: String;
 }
 
 class Application extends React.Component<IProperties, IState> {
 
   // tslint:disable-next-line:no-any
   content: any;
-  // tslint:disable-next-line:no-any
-  prevContent: any;
   // tslint:disable-next-line:no-any
   project: any;
   // tslint:disable-next-line:no-any
@@ -135,14 +117,11 @@ class Application extends React.Component<IProperties, IState> {
     if (props.frontend) {
       frontend = { ...props.frontend };
     }
-    this.state = {
-      content: frontend && frontend.page.content,
-    };
-    this.content = null;
-    this.prevContent = null;
-    this.project = null;
-    this.pageName = null;
-    this.seo = null;
+
+    this.content = frontend && frontend.page.content;
+    this.project = frontend && frontend.project;
+    this.pageName = frontend && frontend.page.name;
+    this.seo = frontend && frontend.seo;
   }
 
   componentDidMount() {
@@ -158,10 +137,10 @@ class Application extends React.Component<IProperties, IState> {
     let frontend = null;
     
     // In case that context is available, try to look for page in cache.
-    if (data && data.languageData && data.languageData.id && data.project && data.project.id) {
+    if (data && data.languageData && data.languageData.id && data.project && data.project.id && data.websiteData && data.websiteData.id) {
       const { data: { pagesUrls } }: LooseObject = await client.query({
         query: GET_PAGES_URLS,
-        variables: { language: data.languageData.id }
+        variables: { language: data.languageData.id, websiteId: data.websiteData.id }
       });
       if (pagesUrls) {
         const pUrl = pagesUrls.find(p => p.url === path);
@@ -234,14 +213,15 @@ class Application extends React.Component<IProperties, IState> {
     if (this.props.server && this.props.server.length > 1) {
       fullUrl = `${this.props.server}${path}`;
     }
-    const seo = this.formatSeoData(this.state.seo as ISeoPluginData);
+
+    let seo = this.formatSeoData(this.seo as ISeoPluginData);
 
     // const seo = this.formatSeoData(frontend.seo as ISeoPluginData);
 
     let favicon = `${process.env.REACT_APP_SERVER_URL}/favicon.ico`;
 
-    if (this.state.project && this.state.project.components) {
-      const components = this.state.project.components.split(',') as string[] | [] as string[];
+    if (this.project && this.project.components) {
+      const components = this.project.components.split(',') as string[] | [] as string[];
       if (components.length > 0) {
         favicon = `${process.env.REACT_APP_SERVER_URL}/assets/${components[0]}/favicon.png`;
       }
@@ -249,31 +229,42 @@ class Application extends React.Component<IProperties, IState> {
 
     return (
       <>
-        <Helmet>
-          <meta name="description" content={seo.description} />
-          <meta name="keywords" content={seo.keywords} />
-          <meta name="theme-color" content={seo.themeColor} />
-          <title>{seo.title || this.pageName}</title> */}
+         <Query query={GET_CONTEXT}>{({ error, loading, data }) => {
 
-          {/* Styles and favicon selected per project */}
-          {/* {styles.map((style: string) => (
-            <link rel="stylesheet" key={style} href={`${process.env.REACT_APP_SERVER_URL}${style}`} />
-          ))}
-          <link rel="shortcut icon" type="image/png" href={favicon} /> */}
+            if (error) { return 'Error...'; }
+            if (loading) { return 'Loading...'; }
 
-          {/* Facebook */}
-          <meta property="og:url" content={fullUrl} />
-          <meta property="og:type" content="website" />
-          <meta property="og:title" content={seo.facebook.title} />
-          <meta property="og:description" content={seo.facebook.description} />
-          <meta property="og:image" content={seo.facebook.image || seo.defaultImage} />
+            const { datasourceItems } = data;
 
-          {/* Twitter */}
-          <meta name="twitter:card" content="summary_large_image" />
-          <meta name="twitter:title" content={seo.twitter.title} />
-          <meta name="twitter:description" content={seo.twitter.description} />
-          <meta name="twitter:image" content={seo.twitter.image || seo.defaultImage} />
-        </Helmet>
+            seo = addContextInformationsFromDatasourceItems(datasourceItems || [], seo);
+            const styles = ComponentsModule.getStyles();
+            return (
+              <Helmet>
+              <meta name="description" content={seo.description} />
+              <meta name="keywords" content={seo.keywords} />
+              <meta name="theme-color" content={seo.themeColor} />
+              <title>{seo.title || this.pageName}</title>
+
+              {/* Styles and favicon selected per project */}
+              {styles.map((style: string) => (
+                <link rel="stylesheet" key={style} href={`${process.env.REACT_APP_SERVER_URL}${style}`} />
+              ))}
+              <link rel="shortcut icon" type="image/png" href={favicon} />
+
+              {/* Facebook */}
+              <meta property="og:url" content={fullUrl} />
+              <meta property="og:type" content="website" />
+              <meta property="og:title" content={seo.facebook.title} />
+              <meta property="og:description" content={seo.facebook.description} />
+              <meta property="og:image" content={seo.facebook.image || seo.defaultImage} />
+
+              {/* Twitter */}
+              <meta name="twitter:card" content="summary_large_image" />
+              <meta name="twitter:title" content={seo.twitter.title} />
+              <meta name="twitter:description" content={seo.twitter.description} />
+              <meta name="twitter:image" content={seo.twitter.image || seo.defaultImage} />
+            </Helmet>);
+         }}</Query>
 
         <LightweightComposer
           content={content}
