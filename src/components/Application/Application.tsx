@@ -58,7 +58,7 @@ const GET_ALL_PAGES = gql`
 `;
 
 const GET_PAGES_URLS = gql`
-  query pagesUrls($language: ID!, $websiteId: Id!) {
+  query pagesUrls($language: ID!, $websiteId: ID!) {
     pagesUrls(where: { language: $language, websiteId: $websiteId }) {
       id
       page
