@@ -110,9 +110,18 @@ app.use(async (req: express.Request, res: express.Response, next: express.NextFu
   // Prepare cachce in client.
   await client.clearStore();
 
-  const frontend = await fetchFrontend(req.url);
+  // Setup origin
+  let origin = req.headers.origin as string;
+  if (!origin) {
+    origin = process.env.REACT_APP_ORIGIN as string;
+  }
+
+  log(Colors.yellow(`Origin in Server: ${Colors.bright(origin)}`));
+
+  const frontend = await fetchFrontend(origin, req.url);
   if (!frontend) {
     log(Colors.red(`Page was not found!`));
+    timeEnd(req.url);
     res.status(404);
     res.end();
     return;

@@ -114,10 +114,10 @@ const fetchPagesUrls = async (languageCode: string) => {
   });
 };
 
-const fetchFrontend = async (path: string) => {
+const fetchFrontend = async (origin: string | null, path: string) => {
   const res = await client.query({
     query: queries.FRONTEND,
-    variables: { url: path }
+    variables: { url: path, origin },
   }).then(({ data: { frontend } }: LooseObject) => {
     if (!frontend || frontend === null) {
       return Promise.all([
