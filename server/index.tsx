@@ -120,6 +120,15 @@ app.use(async (req: express.Request, res: express.Response, next: express.NextFu
   if (!origin) {
     origin = process.env.REACT_APP_ORIGIN as string;
   }
+  // If origin is localhost and we set REACT_APP_ORIGIN, override it
+  if (process.env.REACT_APP_ORIGIN) {
+    if (origin) {
+      const localhostRegex = /.*localhost.*/gi;
+      if (localhostRegex.test(origin)) {
+        origin = process.env.REACT_APP_ORIGIN as string;
+      }
+    }
+  }
 
   // Check if origin has https? and addit if not
   const regex = /^https?.*$/gi;
