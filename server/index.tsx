@@ -111,10 +111,10 @@ app.use(async (req: express.Request, res: express.Response, next: express.NextFu
   await client.clearStore();
 
   // Setup origin
-  let origin = req.headers.host;
+  let origin = req.headers.host as string;
   // If not in host, try origin
   if (!origin) {
-    origin = req.headers.origin;
+    origin = req.headers.origin as string;
   }
   // If not in origin, try .env
   if (!origin) {
