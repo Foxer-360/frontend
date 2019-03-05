@@ -116,6 +116,14 @@ app.use(async (req: express.Request, res: express.Response, next: express.NextFu
     origin = process.env.REACT_APP_ORIGIN as string;
   }
 
+  // Check if origin has https? and addit if not
+  const regex = /^https?.*$/gi;
+  if (origin) {
+    if (!regex.test(origin)) {
+      origin = `http://${origin}`;
+    }
+  }
+
   log(Colors.yellow(`Origin in Server: ${Colors.bright(origin)}`));
 
   const frontend = await fetchFrontend(origin, req.url);
