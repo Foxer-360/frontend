@@ -111,10 +111,12 @@ app.use(async (req: express.Request, res: express.Response, next: express.NextFu
   await client.clearStore();
 
   // Setup origin
-  const refRegex = /^(https?\:\/\/)?([^\/]+).*$/gi;
-  const ref = refRegex.exec(req.headers.referer);
-
-  let origin = ref['2'] as string;
+  let origin = req.headers.host;
+  // If not in host, try origin
+  if (!origin) {
+    origin = req.headers.origin;
+  }
+  // If not in origin, try .env
   if (!origin) {
     origin = process.env.REACT_APP_ORIGIN as string;
   }
@@ -127,7 +129,7 @@ app.use(async (req: express.Request, res: express.Response, next: express.NextFu
     }
   }
 
-  log(Colors.yellow(`Origin in Server: ${Colors.bright(origin)}, Referer: ${Colors.bright(ref['2'])}`));
+  log(Colors.yellow(`Origin in Server: ${Colors.bright(origin)}`));
 
   const frontend = await fetchFrontend(origin, req.url);
   if (!frontend) {
