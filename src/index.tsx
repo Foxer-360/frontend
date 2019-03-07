@@ -5,7 +5,6 @@ import { BrowserRouter, Route } from 'react-router-dom';
 
 import Application from '@source/components/Application';
 import { client } from '@source/services/graphql';
-import registerServiceWorker from '@source/services/serviceWorker';
 
 // import '@source/styles/main.scss';
 
@@ -17,5 +16,3 @@ ReactDOM.hydrate(
   </ApolloProvider>,
   document.getElementById('root') as HTMLElement
 );
-
-registerServiceWorker();
