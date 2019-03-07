@@ -95,22 +95,22 @@ const setContext = async (frontend: LooseObject) => {
   });
 };
 
-const fetchPagesUrls = async (languageCode: string) => {
+const fetchPagesUrls = async (language: string) => {
   const query = gql`
-    query pagesUrls($languageCode: String) {
-      pagesUrls(where: { languageCode: $languageCode }) {
-        id
-        page
-        url
-        name
-        description
-      }
+  query pagesUrls($language: ID!) {
+    pagesUrls(where: { language: $language }) {
+      id
+      page
+      url
+      name
+      description
     }
+  }
   `;
 
   return client.query({
     query,
-    variables: { languageCode }
+    variables: { language }
   });
 };
 
@@ -129,7 +129,7 @@ const fetchFrontend = async (origin: string | null, path: string) => {
     return Promise.all([
       Promise.resolve(frontend),
       setContext(frontend),
-      fetchPagesUrls(language.code)
+      fetchPagesUrls(language.id)
     ]);
   }).then(([frontend]) => {
     return Promise.resolve(frontend);
