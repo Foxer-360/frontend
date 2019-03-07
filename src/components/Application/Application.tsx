@@ -37,7 +37,7 @@ const GET_ALL_PAGES = gql`
         plugin
         content
       }
-      translations(where: { 
+      translations(where: {
         language: { id: $languageId }
       }) {
         id
@@ -108,7 +108,7 @@ class Application extends React.Component<IProperties, IState> {
   project: any;
   // tslint:disable-next-line:no-any
   pageName: any;
-  // tslint:disable-next-line:no-any 
+  // tslint:disable-next-line:no-any
   seo: any;
 
   constructor(props: IProperties) {
@@ -135,7 +135,7 @@ class Application extends React.Component<IProperties, IState> {
       query: GET_CONTEXT
     });
     let frontend = null;
-    
+
     // In case that context is available, try to look for page in cache.
     if (data && data.languageData && data.languageData.id && data.project && data.project.id && data.websiteData && data.websiteData.id) {
       const { data: { pagesUrls } }: LooseObject = await client.query({
@@ -148,7 +148,7 @@ class Application extends React.Component<IProperties, IState> {
         if (pUrl) {
           const { data: { pages } }: LooseObject = await client.query({
             query: GET_ALL_PAGES,
-            variables: { 
+            variables: {
               languageId: data.languageData.id,
               projectId: data.project.id,
             }
@@ -169,9 +169,31 @@ class Application extends React.Component<IProperties, IState> {
     }
 
     // In other cases fetch frontend
+    let origin = null;
+    if (window) {
+      // Simulate SSR origin variable into Query
+      origin = window.location.host;
+      const originRegex = /.*localhost.*/gi;
+      if (origin && originRegex.test(origin)) {
+        // Override localhost with defined origin in .env
+        if (process.env.REACT_APP_ORIGIN) {
+          origin = process.env.REACT_APP_ORIGIN;
+        }
+      }
+    }
+
+    if (origin) {
+      const httpRegex = /^https?.*/gi;
+      if (!httpRegex.test(origin)) {
+        origin = `http://${origin}`;
+      }
+    }
+
+    console.log(`%cOrigin in frontend query: %c${origin}`, 'color: orange', 'color: orange; font-weight: bold');
+
     const { data: { frontend: frontendFromQuery } }: LooseObject = await client.query({
       query: queries.FRONTEND,
-      variables: { url: path }
+      variables: { url: path, origin }
     });
     frontend = frontendFromQuery;
 
@@ -196,13 +218,14 @@ class Application extends React.Component<IProperties, IState> {
     if (!path) {
       return null;
     }
+
     if (
       !(this.content) ||
       !this.project
     ) {
       return <span>Page not found...</span>;
     }
-    
+
     const content = this.content;
 
     if (!content) {
