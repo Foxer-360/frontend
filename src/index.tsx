@@ -23,9 +23,14 @@ const GET_CONTEXT = gql`
 `;
 
 const startTheShow = async () => {
-  const context = await client.cache.readQuery({
-    query: GET_CONTEXT
-  }) as LooseObject;
+  let context = null;
+  try {
+    context = await client.cache.readQuery({
+      query: GET_CONTEXT
+    }) as LooseObject;
+  } catch (e) {
+    // We have no context in cash, so just continue without context
+  }
 
   let ApplicationWithDefaultProps = (props: RouteComponentProps) => (<Application {...props} />);
   if (context && context.project) {
