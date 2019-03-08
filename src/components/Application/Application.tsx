@@ -189,6 +189,7 @@ class Application extends React.Component<IProperties, IState> {
       }
     }
 
+    client.writeData({ data: { origin: { origin: origin, url: path } } });
     console.log(`%cOrigin in frontend query: %c${origin}`, 'color: orange', 'color: orange; font-weight: bold');
 
     const { data: { frontend: frontendFromQuery } }: LooseObject = await client.query({

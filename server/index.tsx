@@ -138,6 +138,7 @@ app.use(async (req: express.Request, res: express.Response, next: express.NextFu
     }
   }
 
+  client.writeData({ data: { origin: { origin: origin, url: req.url } } });
   log(Colors.yellow(`Origin in Server: ${Colors.bright(origin)}`));
 
   const frontend = await fetchFrontend(origin, req.url);
