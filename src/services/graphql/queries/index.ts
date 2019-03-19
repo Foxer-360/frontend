@@ -6,6 +6,7 @@ const FRONTEND = gql`
       website @connection(key: "websiteData") {
         id
         title
+        urlMask
       }
       language @connection(key: "languageData") {
         id
