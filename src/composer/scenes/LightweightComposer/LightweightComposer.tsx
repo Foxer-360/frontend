@@ -1,4 +1,4 @@
-import { IComponentModule, IPluginModule } from '@source/composer/types';
+import { IComponentModule, ILooseObject, IPluginModule } from '@source/composer/types';
 import { Context } from '@source/composer/utils';
 import * as React from 'react';
 import Container from './components/Container';
@@ -12,6 +12,8 @@ export interface IProperties {
   plugins: string[];
 
   client: any; // tslint:disable-line:no-any
+
+  componentTemplates?: ILooseObject[];
 }
 
 class LightweightComposer extends React.Component<IProperties, {}> {
@@ -34,6 +36,7 @@ class LightweightComposer extends React.Component<IProperties, {}> {
       <Container
         content={this.props.content.content}
         componentModule={this.props.componentModule}
+        componentTemplates={this.props.componentTemplates}
       />
     );
   }

@@ -69,6 +69,23 @@ const GET_PAGES_URLS = gql`
   }
 `;
 
+const COMPONENT_TEMPLATE_QUERY = gql`
+query componentTemplates(
+  $websiteId: ID!,
+  $languageId: ID!
+){
+  componentTemplates(where: {
+    website: { id: $websiteId },
+    language: { id: $languageId }
+  }) {
+    id,
+    name,
+    type,
+    content,
+  }
+}
+`;
+
 export interface IProperties {
   server?: string;
   // tslint:disable-next-line:no-any
@@ -262,40 +279,60 @@ class Application extends React.Component<IProperties, IState> {
             seo = addContextInformationsFromDatasourceItems(datasourceItems || [], seo);
             const styles = ComponentsModule.getStyles();
             return (
-              <Helmet>
-              <meta name="description" content={seo.description} />
-              <meta name="keywords" content={seo.keywords} />
-              <meta name="theme-color" content={seo.themeColor} />
-              <title>{seo.title || this.pageName}</title>
+              <>
+                <Helmet>
+                  <meta name="description" content={seo.description} />
+                  <meta name="keywords" content={seo.keywords} />
+                  <meta name="theme-color" content={seo.themeColor} />
+                  <title>{seo.title || this.pageName}</title>
 
-              {/* Styles and favicon selected per project */}
-              {styles.map((style: string) => (
-                <link rel="stylesheet" key={style} href={`${process.env.REACT_APP_SERVER_URL}${style}`} />
-              ))}
-              <link rel="shortcut icon" type="image/png" href={favicon} />
+                  {/* Styles and favicon selected per project */}
+                  {styles.map((style: string) => (
+                    <link rel="stylesheet" key={style} href={`${process.env.REACT_APP_SERVER_URL}${style}`} />
+                  ))}
+                  <link rel="shortcut icon" type="image/png" href={favicon} />
 
-              {/* Facebook */}
-              <meta property="og:url" content={fullUrl} />
-              <meta property="og:type" content="website" />
-              <meta property="og:title" content={seo.facebook.title} />
-              <meta property="og:description" content={seo.facebook.description} />
-              <meta property="og:image" content={seo.facebook.image || seo.defaultImage} />
+                  {/* Facebook */}
+                  <meta property="og:url" content={fullUrl} />
+                  <meta property="og:type" content="website" />
+                  <meta property="og:title" content={seo.facebook.title} />
+                  <meta property="og:description" content={seo.facebook.description} />
+                  <meta property="og:image" content={seo.facebook.image || seo.defaultImage} />
 
-              {/* Twitter */}
-              <meta name="twitter:card" content="summary_large_image" />
-              <meta name="twitter:title" content={seo.twitter.title} />
-              <meta name="twitter:description" content={seo.twitter.description} />
-              <meta name="twitter:image" content={seo.twitter.image || seo.defaultImage} />
-            </Helmet>);
+                  {/* Twitter */}
+                  <meta name="twitter:card" content="summary_large_image" />
+                  <meta name="twitter:title" content={seo.twitter.title} />
+                  <meta name="twitter:description" content={seo.twitter.description} />
+                  <meta name="twitter:image" content={seo.twitter.image || seo.defaultImage} />
+                </Helmet>
+
+               <Query query={COMPONENT_TEMPLATE_QUERY} variables={{ websiteId: data.websiteData.id, languageId: data.languageData.id }}>
+                {({ error: cError, loading: cLoading, data: cData }) => {
+                  if (cError || cLoading) {
+                    return null;
+                  }
+                  let templates = [];
+                  if (cData && cData.componentTemplates) {
+                    templates = cData.componentTemplates;
+                  }
+
+                  console.log(templates);
+
+                  return (
+                    <LightweightComposer
+                      content={content}
+                      componentModule={ComponentsModule}
+                      pluginModule={PluginsModule}
+                      plugins={['navigations', 'languages']}
+                      client={client}
+                      componentTemplates={templates}
+                    />
+                  );
+                }}
+              </Query>
+            </>
+            );
          }}</Query>
-
-        <LightweightComposer
-          content={content}
-          componentModule={ComponentsModule}
-          pluginModule={PluginsModule}
-          plugins={['navigations', 'languages']}
-          client={client}
-        />
       </>
     );
   }

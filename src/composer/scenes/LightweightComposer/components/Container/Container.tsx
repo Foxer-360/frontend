@@ -1,4 +1,4 @@
-import { IComponentModule } from '@source/composer/types';
+import { IComponentModule, ILooseObject } from '@source/composer/types';
 import { Context, addContextInformationsFromDatasourceItems } from '@source/composer/utils';
 import * as React from 'react';
 import gql from 'graphql-tag';
@@ -12,6 +12,8 @@ export interface IProperties {
   // tslint:disable-next-line:no-any
   content: any[];
   componentModule: IComponentModule;
+
+  componentTemplates?: ILooseObject[];
 }
 
 export interface IState {
@@ -63,7 +65,18 @@ class Container extends React.Component<IProperties, IState> {
 
             const { datasourceItems } = data;
 
-            const parsedData = addContextInformationsFromDatasourceItems(datasourceItems, node.data);
+            let sourceData = node.data;
+            if (sourceData.componentTemplateId && this.props.componentTemplates) {
+              // Find template and use it, it didn't exists, null data
+              sourceData = this.props.componentTemplates.find((template: ILooseObject) => template.id === sourceData.componentTemplateId);
+              if (sourceData && sourceData.content) {
+                sourceData = sourceData.content;
+              } else {
+                sourceData = {};
+              }
+            }
+
+            const parsedData = addContextInformationsFromDatasourceItems(datasourceItems, sourceData);
 
             return (
               <Comp
