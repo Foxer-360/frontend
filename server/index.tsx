@@ -11,7 +11,7 @@ import { Route } from 'react-router-dom';
 import Application from '../src/components/Application';
 import Html from './components/Html';
 import { client, fetchFrontend } from './graphql';
-import { clearTerminal, Colors, logger } from './utils';
+import { clearTerminal, Colors, logger, lockCacheRW, unlockCacheRW } from './utils';
 import gql from 'graphql-tag';
 import './utils/document';
 
@@ -108,6 +108,7 @@ app.use(async (req: express.Request, res: express.Response, next: express.NextFu
   time(req.url);
 
   // Prepare cachce in client.
+  await lockCacheRW();
   await client.clearStore();
 
   // Setup origin
@@ -174,12 +175,14 @@ app.use(async (req: express.Request, res: express.Response, next: express.NextFu
       />
     );
     const staticHtml = ReactDOM.renderToStaticMarkup(html);
+    unlockCacheRW();
 
     res.send(`<!doctype html>\n${staticHtml}`);
     res.end();
     timeEnd(req.url);
   })
   .catch(err => {
+    unlockCacheRW();
     res.status(500);
     res.end(`Some error occurres ! Message: ${err.message}`);
     timeEnd(req.url);

@@ -17,7 +17,8 @@ if (!graphqlServer) {
 const cache = new InMemoryCache();
 
 if (window && (window as LooseObject).__APOLLO_STATE__) {
-  cache.restore((window as LooseObject).__APOLLO_STATE__);
+  const cacheData = JSON.parse(atob((window as LooseObject).__APOLLO_STATE__));
+  cache.restore(cacheData);
 }
 
 const stateLink = withClientState({

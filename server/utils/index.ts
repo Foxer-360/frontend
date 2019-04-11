@@ -1,6 +1,7 @@
 'use strict';
 import { Colors } from './colors';
 import { logger } from './logger';
+import { lockCacheRW, unlockCacheRW } from './lock';
 
 /**
  * The simple function that clear whole terminal. It's useful when you run the
@@ -20,4 +21,6 @@ export {
   clearTerminal,
   Colors,
   logger,
+  lockCacheRW,
+  unlockCacheRW,
 };
