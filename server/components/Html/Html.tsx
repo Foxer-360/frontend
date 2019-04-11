@@ -29,7 +29,7 @@ const Html = ({ content, client: { cache }, manifest, helmet }: IProperties) => 
       <script
         charSet="UTF-8"
         dangerouslySetInnerHTML={{
-          __html: `window.__APOLLO_STATE__="${Buffer.from(JSON.stringify(cache.extract())).toString('base64')}";`,
+          __html: `window.__APOLLO_STATE__=${JSON.stringify(cache.extract())};`,
         }}
       />
       <script src={`/${manifest['main.js']}`} charSet="UTF-8" />
