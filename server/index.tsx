@@ -108,7 +108,7 @@ app.use(async (req: express.Request, res: express.Response, next: express.NextFu
   time(req.url);
 
   // Prepare cachce in client.
-  await lockCacheRW();
+  const lockTimer = await lockCacheRW();
   await client.clearStore();
 
   // Setup origin
@@ -145,6 +145,7 @@ app.use(async (req: express.Request, res: express.Response, next: express.NextFu
   const frontend = await fetchFrontend(origin, req.url);
   if (!frontend) {
     log(Colors.red(`Page was not found!`));
+    unlockCacheRW(lockTimer);
     timeEnd(req.url);
     res.status(404);
     res.end();
@@ -175,14 +176,14 @@ app.use(async (req: express.Request, res: express.Response, next: express.NextFu
       />
     );
     const staticHtml = ReactDOM.renderToStaticMarkup(html);
-    unlockCacheRW();
+    unlockCacheRW(lockTimer);
 
     res.send(`<!doctype html>\n${staticHtml}`);
     res.end();
     timeEnd(req.url);
   })
   .catch(err => {
-    unlockCacheRW();
+    unlockCacheRW(lockTimer);
     res.status(500);
     res.end(`Some error occurres ! Message: ${err.message}`);
     timeEnd(req.url);

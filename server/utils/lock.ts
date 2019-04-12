@@ -5,6 +5,8 @@ let _cacheLock = false;
 const _lockMessage = `${Colors.magenta(Colors.bright('[Apollo Cache]'))} ${Colors.magenta('Locked for current request...')}`;
 const _unlockMessage = `${Colors.magenta(Colors.bright('[Apollo Cache]'))} ${Colors.magenta('Unlocked for others...')}`;
 const _lockTryInterval = { min: 1, max: 5 };
+const _unlockFrozenMessage = `${Colors.magenta(Colors.bright('[Apollo Cache]'))} ${Colors.magenta('Lock is frozen! Unlocking for others...')}`;
+const _maxLockTime = 2000;
 
 /**
  * Helper function which shows logs into console
@@ -33,11 +35,15 @@ const getRandomTime = (min: number, max: number) => {
  *
  * @param {() => void} resolve callback which is called after lock
  */
-const _tryToLock = (resolve) => {
+const _tryToLock = (resolve: (timer: NodeJS.Timeout) => void) => {
   if (!_cacheLock) {
     log(_lockMessage);
     _cacheLock = true;
-    resolve();
+    const timer = setTimeout(() => {
+      _cacheLock = false;
+      log(_unlockFrozenMessage);
+    }, _maxLockTime);
+    resolve(timer);
     return;
   }
 
@@ -52,15 +58,19 @@ const _tryToLock = (resolve) => {
  *
  * @return {Promise} resolve after lock
  */
-const lockCacheRW = async () => {
+const lockCacheRW = async (): Promise<NodeJS.Timeout> => {
   if (!_cacheLock) {
     log(_lockMessage);
     _cacheLock = true;
-    return Promise.resolve();
+    const timer = setTimeout(() => {
+      _cacheLock = false;
+      log(_unlockFrozenMessage);
+    }, _maxLockTime);
+    return Promise.resolve(timer);
   }
 
   // Waiting process
-  return new Promise((res) => {
+  return new Promise((res: (timer: NodeJS.Timeout) => void) => {
     _tryToLock(res);
   });
 };
@@ -68,9 +78,12 @@ const lockCacheRW = async () => {
 /**
  * This function unlock cache.
  */
-const unlockCacheRW = () => {
+const unlockCacheRW = (timer?: NodeJS.Timeout) => {
   log(_unlockMessage);
   _cacheLock = false;
+  if (timer) {
+    clearTimeout(timer);
+  }
 };
 
 export {
