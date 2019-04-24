@@ -19,7 +19,7 @@ module.exports = {
     filename: 'server.js'
   },
   resolve: {
-    modules: ['node_modules', path.resolve(appPath, 'node_modules')],
+    modules: ['node_modules', path.resolve(appPath, 'node_modules'), path.resolve(appPath, '../node_modules')],
     extensions: [
       '.web.ts',
       '.ts',
@@ -65,6 +65,7 @@ module.exports = {
         },
         exclude: [
           path.resolve(appPath, 'node_modules'),
+          path.resolve(appPath, '../node_modules'),
           deps.componentsPath,
           deps.pluginsPath,
           path.resolve(appPath, '../components')
