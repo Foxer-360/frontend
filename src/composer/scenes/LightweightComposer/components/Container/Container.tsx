@@ -54,6 +54,7 @@ class Container extends React.Component<IProperties, IState> {
               <Container
                 content={node.content}
                 componentModule={this.props.componentModule}
+                componentTemplates={this.props.componentTemplates}
                 key={node.id}
               />
             );
