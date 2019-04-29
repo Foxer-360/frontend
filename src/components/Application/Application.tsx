@@ -177,6 +177,17 @@ class Application extends React.Component<IProperties, IState> {
               this.seo = localizedPage.plugin && localizedPage.plugin === 'seo' ? localizedPage.plugin.content : null;
               this.project = data.project;
               this.pageName = localizedPage.translations[0].name;
+
+              client.writeQuery({
+                query: gql`
+                query {
+                  pageData,
+                }`,
+                data: {
+                  pageData: localizedPage.translations[0],
+                }
+              });
+
               this.forceUpdate();
               return;
             }
