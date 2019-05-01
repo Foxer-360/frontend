@@ -299,12 +299,13 @@ class Application extends React.Component<IProperties, IState> {
 
                   {/* Styles and favicon selected per project */}
                   {styles.map((style: string) => (
-                    <link rel="stylesheet" key={style} href={`${process.env.REACT_APP_SERVER_URL}${style}`} />
+                    <link rel="stylesheet" key={style} href={`${style}`} />
                   ))}
                   <link rel="shortcut icon" type="image/png" href={favicon} />
 
-                  {/* Facebook */}
+                  {/* Facebook
                   <meta property="og:url" content={fullUrl} />
+                  */}
                   <meta property="og:type" content="website" />
                   <meta property="og:title" content={seo.facebook.title} />
                   <meta property="og:description" content={seo.facebook.description} />
