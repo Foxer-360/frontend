@@ -144,6 +144,8 @@ class Application extends React.Component<IProperties, IState> {
     this.project = frontend && frontend.project;
     this.pageName = frontend && frontend.page.name;
     this.seo = frontend && frontend.seo;
+
+    this.initGTM = this.initGTM.bind(this);
   }
 
   componentDidMount() {
@@ -415,9 +417,23 @@ class Application extends React.Component<IProperties, IState> {
     if (websiteData.googleTrackingPixel) {
       this.initGTM(websiteData.googleTrackingPixel);
     }
+
+    this.initGTM('GTM-MD26R7Z');
   }
 
   private initGTM(gtmId: string) {
+    if (!document) { 
+      return;
+    }
+
+    if (!document.head || !document.body || !document.createElement) {
+      return;
+    }
+    
+    if (!document.head.insertBefore || !document.body.insertBefore || !document.head.appendChild) {
+      return;
+    }
+
     if (this.state.gtmIds.includes(gtmId)) {
       return;
     }
