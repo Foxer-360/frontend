@@ -195,6 +195,10 @@ class Application extends React.Component<IProperties, IState> {
                 }
               });
 
+              if (data.websiteData.googleTrackingPixel) {
+                this.initGTM(data.websiteData.googleTrackingPixel);
+              }
+
               this.forceUpdate();
               return;
             }
@@ -417,8 +421,6 @@ class Application extends React.Component<IProperties, IState> {
     if (websiteData.googleTrackingPixel) {
       this.initGTM(websiteData.googleTrackingPixel);
     }
-
-    this.initGTM('GTM-MD26R7Z');
   }
 
   private initGTM(gtmId: string) {
