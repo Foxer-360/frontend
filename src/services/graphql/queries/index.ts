@@ -6,7 +6,6 @@ const FRONTEND = gql`
       website @connection(key: "websiteData") {
         id
         title
-        domain
         urlMask
         googleTrackingPixel 
       }
