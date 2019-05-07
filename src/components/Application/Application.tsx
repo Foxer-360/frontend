@@ -1,5 +1,4 @@
 import { LightweightComposer } from '@source/composer';
-
 import { queries, client } from '@source/services/graphql';
 import { ComponentsModule, PluginsModule } from '@source/services/modules';
 import * as React from 'react';
@@ -8,6 +7,7 @@ import { Query } from 'react-apollo';
 import { Helmet } from 'react-helmet';
 import gql from 'graphql-tag';
 import { addContextInformationsFromDatasourceItems } from '@source/composer/utils';
+import TagManager from 'react-gtm-module';
 
 const GET_CONTEXT = gql`
 {
@@ -115,6 +115,7 @@ export interface ISeoPluginData {
 }
 
 export interface IState {
+  gtmIds: string[]; // already initialized Google Tag Manager codes
 }
 
 class Application extends React.Component<IProperties, IState> {
@@ -134,6 +135,10 @@ class Application extends React.Component<IProperties, IState> {
     if (props.frontend) {
       frontend = { ...props.frontend };
     }
+
+    this.state = {
+      gtmIds: []
+    };
 
     this.content = frontend && frontend.page.content;
     this.project = frontend && frontend.project;
@@ -328,8 +333,6 @@ class Application extends React.Component<IProperties, IState> {
                     templates = cData.componentTemplates;
                   }
 
-                  console.log(templates);
-
                   return (
                     <LightweightComposer
                       content={content}
@@ -348,9 +351,10 @@ class Application extends React.Component<IProperties, IState> {
       </>
     );
   }
-
+  /**
+   * Setting context to be provided through the app + initialize GTM if exists
+   */
   private setContext = async (frontend, oldContext) => {
-
     if (!frontend) { return; }
     const {
       language: languageData,
@@ -407,6 +411,23 @@ class Application extends React.Component<IProperties, IState> {
     this.project = project;
     this.pageName = frontend.page.name;
     this.forceUpdate();
+
+    if (websiteData.googleTrackingPixel) {
+      this.initGTM(websiteData.googleTrackingPixel);
+    }
+  }
+
+  private initGTM(gtmId: string) {
+    if (this.state.gtmIds.includes(gtmId)) {
+      return;
+    }
+
+    const gtmIds = [...this.state.gtmIds, gtmId];
+    this.setState({ gtmIds }, () => {
+      TagManager.initialize({
+        gtmId
+      });
+    });
   }
 
   private formatSeoData(seo: ISeoPluginData): ISeoPluginData {
