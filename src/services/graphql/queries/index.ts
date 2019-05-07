@@ -7,6 +7,7 @@ const FRONTEND = gql`
         id
         title
         urlMask
+        googleTrackingPixel 
       }
       language @connection(key: "languageData") {
         id

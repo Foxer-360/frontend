@@ -8041,6 +8041,11 @@ react-frame-component@^4.0.1:
   version "4.0.2"
   resolved "https://registry.yarnpkg.com/react-frame-component/-/react-frame-component-4.0.2.tgz#408f137ab4ba14cd13a5844b86ac972903dda021"
 
+react-gtm-module@^2.0.4:
+  version "2.0.4"
+  resolved "https://registry.yarnpkg.com/react-gtm-module/-/react-gtm-module-2.0.4.tgz#0f23a1ee119a4abb95917cc9def7b845e66d9fbb"
+  integrity sha512-VLjs5FqBLT6U+B8AxbK5c773G/uSR40XyM5+tUS6AMFsFrH2pcO/wxQqNrzprYFtinKG/eyXYZ/I/pnKu+rn/Q==
+
 react-helmet@^5.2.0:
   version "5.2.0"
   resolved "https://registry.yarnpkg.com/react-helmet/-/react-helmet-5.2.0.tgz#a81811df21313a6d55c5f058c4aeba5d6f3d97a7"
