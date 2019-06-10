@@ -211,16 +211,18 @@ app.use(async (req: express.Request, res: express.Response, next: express.NextFu
   await client.writeData({ data: { origin: { origin: origin, url: req.url } } });
   log(Colors.yellow(`Origin in Server: ${Colors.bright(origin)}`));
 
+  let statusCode = 200;
   let frontend = await fetchFrontend(origin, req.url);
   if (!frontend) {
     log(Colors.red(`Page was not found! Try to find 404 page`));
     frontend = await find404Page(origin, req.url);
-    res.status(404);
+    statusCode = 404;
 
     if (!frontend) {
       log(Colors.red(`Page 404 was not found!`));
       unlockCacheRW(lockTimer);
       timeEnd(req.url);
+      res.status(404);
       res.end();
       return;
     }
@@ -242,7 +244,7 @@ app.use(async (req: express.Request, res: express.Response, next: express.NextFu
     fs.readFileSync('./build/asset-manifest.json').toString()
   ])
   .then(([content, manifest]) => {
-    res.status(200);
+    res.status(statusCode);
     const html = (
       <Html
         content={content}
