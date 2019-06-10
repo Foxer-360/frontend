@@ -9,6 +9,71 @@ import gql from 'graphql-tag';
 import { addContextInformationsFromDatasourceItems } from '@source/composer/utils';
 import TagManager from 'react-gtm-module';
 
+const resolveUrl = (url: string) => {
+  if (url[url.length - 1] !== '/') {
+    url += '/';
+  }
+
+  const regex = /^\/?([a-z-_]{3,}\/?)?([a-z]{2}\/)([a-z-_0-9]{3,}[a-z-_\/0-9]*)?\/?$/gi;
+  const matches = regex.exec(url);
+
+  const res = {
+    website: null,
+    language: null,
+    pages: null,
+  };
+
+  if (!matches) {
+    return res;
+  }
+
+  matches.forEach((match, groupIndex) => {
+    switch (groupIndex) {
+      case 1:
+        // This is group of website
+        if (match) {
+          res.website = match.replace('/', '');
+        }
+        break;
+      case 2:
+        // This is group for language
+        if (match) {
+          res.language = match.replace('/', '');
+        }
+        break;
+      case 3:
+        // This is group for pages
+        if (match) {
+          const pages = match.split('/').filter((p) => p.length > 2);
+          res.pages = [ ...pages ];
+        }
+        break;
+      default:
+        break;
+    }
+  });
+
+  return res;
+};
+
+const build404Url = (url: string) => {
+  // (get website and lang)
+  const resolvedUrl = resolveUrl(url);
+
+  // build 404 url
+  let url404 = '/';
+  if (resolvedUrl.website) {
+    url404 += resolvedUrl.website + '/';
+  }
+  if (resolvedUrl.language) {
+    url404 += resolvedUrl.language + '/';
+  }
+
+  url404 += '404';
+
+  return url404;
+};
+
 const GET_CONTEXT = gql`
 {
   pageData @client
@@ -228,14 +293,27 @@ class Application extends React.Component<IProperties, IState> {
       }
     }
 
+    path = path.replace(/\/$/i, '');
     client.writeData({ data: { origin: { origin: origin, url: path } } });
     console.log(`%cOrigin in frontend query: %c${origin}`, 'color: orange', 'color: orange; font-weight: bold');
 
-    const { data: { frontend: frontendFromQuery } }: LooseObject = await client.query({
+    let { data: { frontend: frontendFromQuery } }: LooseObject = await client.query({
       query: queries.FRONTEND,
       variables: { url: path, origin }
     });
     frontend = frontendFromQuery;
+
+    if (!frontend) {
+      // not found, try 404 page
+      const url404 = build404Url(path);
+      client.writeData({ data: { origin: { origin: origin, url: url404 } } });
+
+      let { data: { frontend: frontendFromQuery404 } }: LooseObject = await client.query({
+        query: queries.FRONTEND,
+        variables: { url: url404, origin }
+      });
+      frontend = frontendFromQuery404;
+    }
 
     return this.setContext(frontend, data);
   }
@@ -424,14 +502,14 @@ class Application extends React.Component<IProperties, IState> {
   }
 
   private initGTM(gtmId: string) {
-    if (!document) { 
+    if (!document) {
       return;
     }
 
     if (!document.head || !document.body || !document.createElement) {
       return;
     }
-    
+
     if (!document.head.insertBefore || !document.body.insertBefore || !document.head.appendChild) {
       return;
     }
